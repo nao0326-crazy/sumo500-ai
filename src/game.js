@@ -3,11 +3,14 @@ import { TACTICS, tacticById, recordTacticSelection } from './data.js';
 // ---------------------------------------------------------------------------
 // World units: 1 unit ≈ 1.75 mm (dohyo radius 220 ≈ 385 mm). The game world is
 // time-scaled, so tyre grip is expressed directly as μ·g in units/s² per unit mass.
-// Robot body is 100mm × 100mm square (≈57 units).
+// Robot body is 100mm × 100mm square (exactly).
 // ---------------------------------------------------------------------------
 const ARENA_RADIUS = 220;
 const ROBOT_RADIUS = 32; // Exported for backward compatibility; actual shape is FOOTPRINT square
-const ROBOT_HALF_SIZE = 29; // 100mm / 1.75mm per unit ≈ 57.14, half is ~28.57 → 29
+// Exact: 100mm body / 2 = 50mm half-size / 1.75mm per unit = 28.571428... units
+// Using full precision to maintain exact 100mm × 100mm dimension.
+// Rounded for readability: 28.57 (29 would give 101.5mm, deviating from spec).
+const ROBOT_HALF_SIZE = 28.57142857142857; // 50/1.75 exact; 28.57 is adequate approximation
 const MAX_SPEED = 142;
 const TURN_SPEED = 3.6;
 const DRIVE_ACCEL = 390;          // motor current limit (stall force per unit mass, both wheels)
