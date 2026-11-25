@@ -35,7 +35,8 @@ function advance(sim, frames, controlA, controlB, dt = 1 / 120) {
 }
 
 test('collision shape includes blade and wide chassis instead of a center-distance circle', () => {
-  assert.equal(FOOTPRINT.length, 10);
+  // Updated for 100mm × 100mm square robot: footprint has 4 corners (vs old 10-sided polygon)
+  assert.equal(FOOTPRINT.length, 4);
   const sim = simulation(unit(0, 0, 0), unit(0, 100, 0));
   assert.equal(sim.resolveRobotCollision(), false);
   assert.ok(ROBOT_RADIUS > 25);
@@ -340,7 +341,9 @@ test('ring-out detection follows the oriented robot footprint', () => {
   const sim = simulation(unit(190, 0, 0), unit(0, 0, Math.PI));
   assert.equal(sim.isOut(sim.player), true, 'front blade extending past the ring is out');
   sim.player.angle = Math.PI;
-  assert.equal(sim.isOut(sim.player), false, 'the same center is safe when the chassis faces inward');
+  // With 100mm × 100mm square robot, facing inward the corners still extend further
+  // than the center, so the robot is still considered out when at the rim
+  assert.equal(sim.isOut(sim.player), true, 'the same center is still out when facing inward with square robot');
 });
 
 test('ring-out after a push resolves the winner in the battle update path', () => {

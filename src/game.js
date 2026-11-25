@@ -3,16 +3,19 @@ import { TACTICS, tacticById, recordTacticSelection } from './data.js';
 // ---------------------------------------------------------------------------
 // World units: 1 unit ≈ 1.75 mm (dohyo radius 220 ≈ 385 mm). The game world is
 // time-scaled, so tyre grip is expressed directly as μ·g in units/s² per unit mass.
+// Robot body is 100mm × 100mm square (≈57 units).
 // ---------------------------------------------------------------------------
 const ARENA_RADIUS = 220;
-const ROBOT_RADIUS = 32;
+const ROBOT_RADIUS = 32; // Exported for backward compatibility; actual shape is FOOTPRINT square
+const ROBOT_HALF_SIZE = 29; // 100mm / 1.75mm per unit ≈ 57.14, half is ~28.57 → 29
 const MAX_SPEED = 142;
 const TURN_SPEED = 3.6;
 const DRIVE_ACCEL = 390;          // motor current limit (stall force per unit mass, both wheels)
 const MOTOR_GAIN = 4.5;           // slope of the DC-motor torque–speed line
 const WHEEL_HALF_TRACK = 15;      // wheel distance from the centre line
 const WHEEL_AXLE_X = 4;           // axle position along the body (local +x is forward)
-const BODY_INERTIA = 330;
+const BODY_INERTIA = 260;       // inertia for 100mm×100mm square robot (kg·mm² → units²)
+// ---------------------------------------------------------------------------
 const CONTACT_SLOP = 0.32;
 const GRIP_ACCEL = 470;           // μ·g at static load (μ = 1 → effective g = 470 units/s²)
 const LATERAL_STIFFNESS = 0.9;    // share of lateral slip a gripping tyre cancels each step
@@ -35,10 +38,10 @@ const toLocal = (unit, point) => { const f = forwardOf(unit); const s = sideOf(u
 
 // Convex footprint: the shallow forward shoulders and broad blade are part of the
 // collision shape, rather than an invisible circle around the robot's center.
+// Updated to 100mm × 100mm square: ~57 units wide/tall, half-size ~29 units.
 const FOOTPRINT = [
-  { x: 31, y: -10 }, { x: 26, y: -21 }, { x: 18, y: -23 },
-  { x: -24, y: -23 }, { x: -28, y: -18 }, { x: -28, y: 18 },
-  { x: -24, y: 23 }, { x: 18, y: 23 }, { x: 26, y: 21 }, { x: 31, y: 10 }
+  { x: -ROBOT_HALF_SIZE, y: -ROBOT_HALF_SIZE }, { x: ROBOT_HALF_SIZE, y: -ROBOT_HALF_SIZE },
+  { x: ROBOT_HALF_SIZE, y: ROBOT_HALF_SIZE }, { x: -ROBOT_HALF_SIZE, y: ROBOT_HALF_SIZE }
 ];
 
 function robot(x, y, angle, color, accent, name, sprite) {
@@ -1068,4 +1071,4 @@ export class BattleSimulation {
   }
 }
 
-export { ARENA_RADIUS, ROBOT_RADIUS, FOOTPRINT, GRIP_ACCEL, DRIVE_ACCEL, MAX_SPEED, contactManifold, forwardOf, sideOf, toLocal };
+export { ARENA_RADIUS, ROBOT_HALF_SIZE, ROBOT_RADIUS, FOOTPRINT, GRIP_ACCEL, DRIVE_ACCEL, MAX_SPEED, contactManifold, forwardOf, sideOf, toLocal };
