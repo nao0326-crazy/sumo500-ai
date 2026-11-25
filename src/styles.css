@@ -150,13 +150,47 @@ button.profile-card { width: 100%; text-align: left; }
 .tactic-readout.hidden { visibility: hidden; }
 .tactic-readout small { margin-left: auto; }
 @media (max-width: 540px) { .battle-stage .canvas-wrap { height: auto; min-height: 200px; } }
-@media (orientation: landscape) and (max-height: 600px) {
-  .battle-mode .topbar { height: 38px; }
-  .battle-screen { height: calc(100dvh - 38px); padding-top: 2px; }
-  .battle-status { display: none; }
-  .battle-stage { grid-template-columns: minmax(120px, 1fr) minmax(0, 2.2fr) minmax(120px, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "left arena right"; }
-  .battle-stage .stick-zone { min-height: 0; }
-  .tactic-readout { margin-top: 3px; }
+@media (orientation: landscape) {
+  .battle-mode .topbar { height: 46px; }
+  /* スマートフォン横画面用：ステージをできるだけ大きくし、スティックは左右に配置 */
+  .battle-screen { height: calc(100dvh - 46px - env(safe-area-inset-bottom)); padding: 6px 0 8px; display: flex; flex-direction: column; }
+  .battle-topline { gap: 8px; }
+  .back-button { min-height: 40px; min-width: 64px; }
+  .pause-button { margin-left: auto; width: 40px; height: 40px; border-radius: 50%; background: rgba(82,214,197,.1); color: var(--mint); font: 700 15px var(--display); }
+  .battle-status { margin: 6px 4px 6px; display: none; }
+  .combatant small.danger { color: var(--red); }
+  /* ステージをメインにし、スティックは左右に配置するグリッドレイアウト */
+  .battle-stage { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(80px, auto) 1fr minmax(80px, auto); grid-template-rows: minmax(0, 1fr); grid-template-areas: "left arena right"; gap: 8px; }
+  .battle-stage .canvas-wrap { grid-area: arena; height: auto; min-height: 280px; max-height: 400px; overflow: visible; }
+  .battle-stage .stick-zone { min-height: 0; display: grid; place-items: center; align-content: center; gap: 4px; background: rgba(21,35,45,.7); border: 1px solid var(--line); border-radius: 6px; touch-action: none; position: relative; z-index: 2; }
+  .battle-stage .stick-zone[data-stick="left"] { grid-area: left; }
+  .battle-stage .stick-zone[data-stick="right"] { grid-area: right; }
+  .battle-stage .stick-base { width: 84px; height: 132px; border-radius: 46px; }
+  .battle-stage .stick-base::before { top: 40px; }
+  .battle-stage .stick-base::after { bottom: 40px; }
+  .battle-stage .stick-knob { width: 46px; height: 46px; margin-top: -23px; transition: none; }
+  .battle-stage .stick-knob span { left: 18px; top: 9px; }
+  .stick-label { color: #8fa1a8; font: 700 10px var(--display); letter-spacing: .12em; pointer-events: none; }
+  .tactic-readout { margin: 7px 2px 0; flex-wrap: wrap; row-gap: 2px; }
+  .tactic-readout.hidden { visibility: hidden; }
+  .tactic-readout small { margin-left: auto; }
+  /* アスペクト比を維持しつつ、スクリーンサイズに応じてステージを拡大 */
+  .canvas-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; background: radial-gradient(circle at center, rgba(82,214,197,.05), transparent 56%), rgba(9,15,21,.38); border: 1px solid var(--line); overflow: hidden; }
+  .canvas-wrap canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .canvas-wrap::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, rgba(255,255,255,.02), transparent 26%, transparent 72%, rgba(82,214,197,.025)); }
+  /* ステージがスティックに若干重なっても構わないよう、overflowをvisibleにし、スティックが上に描画されるようにz-indexを調整 */
+  .battle-stage { overflow: visible; }
+  /* スティックのタッチ領域が潰れないよう、キャンバスより前に配置 */
+  .battle-stage .stick-zone { pointer-events: auto; }
+  /* 安全領域の考慮 */
+  @supports (bottom: env(safe-area-inset-bottom)) {
+    .battle-screen { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  }
+}
+@media (orientation: portrait) and (max-width: 540px) {
+  .canvas-wrap { height: min(44vh, 370px); min-height: 280px; }
+  .control-panel { margin-top: 7px; }
+  .battle-screen { padding-bottom: 8px; }
 }
 @media (min-width: 680px) { .battle-stage { max-width: 760px; margin: 0 auto; width: 100%; } .battle-stage .canvas-wrap { height: auto; } }
 
