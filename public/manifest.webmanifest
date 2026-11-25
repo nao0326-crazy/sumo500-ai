@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "SUMO 500 — AI対戦アリーナ",
+  "short_name": "SUMO 500",
+  "description": "500g級ロボット相撲のローカルAI対戦・育成ゲーム（オフライン対応）",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1118",
+  "theme_color": "#0c1119",
+  "lang": "ja",
+  "categories": ["games"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

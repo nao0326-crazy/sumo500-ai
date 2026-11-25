@@ -1,0 +1,615 @@
+{
+  "generatedAt": "2026-11-25T15:51:27.297Z",
+  "perType": 30,
+  "fresh": {
+    "direct": {
+      "label": "直進型",
+      "matches": 30,
+      "aiWins": 10,
+      "aiLosses": 20,
+      "draws": 0,
+      "winRate": 33.3,
+      "opponentRingOut": 30,
+      "aiRingOut": 66.7,
+      "avgTime": 7.1,
+      "sideHitSecondsPerMatch": 0.77,
+      "sidePressureSecondsPerMatch": 1.19,
+      "pivot": {
+        "attempts": 16,
+        "recoveries": 2
+      },
+      "tacticsUsed": {
+        "escape": 21,
+        "zigzag": 4,
+        "pivot": 17,
+        "diagonal": 28,
+        "sidestep": 20,
+        "counter": 30,
+        "reposition": 6,
+        "direct": 5,
+        "flank": 6
+      }
+    },
+    "retreat": {
+      "label": "後退型",
+      "matches": 30,
+      "aiWins": 30,
+      "aiLosses": 0,
+      "draws": 0,
+      "winRate": 100,
+      "opponentRingOut": 100,
+      "aiRingOut": 0,
+      "avgTime": 7.9,
+      "sideHitSecondsPerMatch": 0,
+      "sidePressureSecondsPerMatch": 0.2,
+      "pivot": {
+        "attempts": 12,
+        "recoveries": 9
+      },
+      "tacticsUsed": {
+        "zigzag": 26,
+        "counter": 27,
+        "diagonal": 30,
+        "doubleZigzag": 22,
+        "escape": 14,
+        "direct": 3,
+        "reposition": 15,
+        "flank": 3,
+        "sidestep": 4,
+        "pivot": 12
+      }
+    },
+    "turn": {
+      "label": "旋回型",
+      "matches": 30,
+      "aiWins": 30,
+      "aiLosses": 0,
+      "draws": 0,
+      "winRate": 100,
+      "opponentRingOut": 100,
+      "aiRingOut": 0,
+      "avgTime": 7.3,
+      "sideHitSecondsPerMatch": 0.52,
+      "sidePressureSecondsPerMatch": 0.59,
+      "pivot": {
+        "attempts": 17,
+        "recoveries": 15
+      },
+      "tacticsUsed": {
+        "doubleZigzag": 20,
+        "diagonal": 30,
+        "zigzag": 15,
+        "escape": 10,
+        "pivot": 17,
+        "counter": 8,
+        "reposition": 15,
+        "direct": 3
+      }
+    },
+    "random": {
+      "label": "不規則型",
+      "matches": 30,
+      "aiWins": 30,
+      "aiLosses": 0,
+      "draws": 0,
+      "winRate": 100,
+      "opponentRingOut": 100,
+      "aiRingOut": 0,
+      "avgTime": 7.6,
+      "sideHitSecondsPerMatch": 1.59,
+      "sidePressureSecondsPerMatch": 0.5,
+      "pivot": {
+        "attempts": 9,
+        "recoveries": 7
+      },
+      "tacticsUsed": {
+        "diagonal": 30,
+        "pivot": 9,
+        "flank": 11,
+        "reposition": 12,
+        "escape": 9,
+        "counter": 16,
+        "doubleZigzag": 24,
+        "zigzag": 15,
+        "direct": 2,
+        "sidestep": 1
+      }
+    },
+    "counter": {
+      "label": "カウンター型",
+      "matches": 30,
+      "aiWins": 1,
+      "aiLosses": 29,
+      "draws": 0,
+      "winRate": 3.3,
+      "opponentRingOut": 3.3,
+      "aiRingOut": 96.7,
+      "avgTime": 10.9,
+      "sideHitSecondsPerMatch": 0,
+      "sidePressureSecondsPerMatch": 0.11,
+      "pivot": {
+        "attempts": 4,
+        "recoveries": 4
+      },
+      "tacticsUsed": {
+        "sidestep": 29,
+        "escape": 29,
+        "diagonal": 28,
+        "doubleZigzag": 22,
+        "flank": 26,
+        "counter": 30,
+        "zigzag": 30,
+        "pivot": 4,
+        "reposition": 3,
+        "direct": 1
+      }
+    },
+    "strong": {
+      "label": "高出力直進型",
+      "matches": 30,
+      "aiWins": 15,
+      "aiLosses": 15,
+      "draws": 0,
+      "winRate": 50,
+      "opponentRingOut": 50,
+      "aiRingOut": 50,
+      "avgTime": 4.9,
+      "sideHitSecondsPerMatch": 0.97,
+      "sidePressureSecondsPerMatch": 0.77,
+      "pivot": {
+        "attempts": 18,
+        "recoveries": 0
+      },
+      "tacticsUsed": {
+        "sidestep": 15,
+        "escape": 15,
+        "diagonal": 30,
+        "counter": 27,
+        "pivot": 18,
+        "zigzag": 3,
+        "flank": 9,
+        "doubleZigzag": 3,
+        "reposition": 9
+      }
+    },
+    "flanker": {
+      "label": "側面狙い型",
+      "matches": 30,
+      "aiWins": 27,
+      "aiLosses": 3,
+      "draws": 0,
+      "winRate": 90,
+      "opponentRingOut": 56.7,
+      "aiRingOut": 6.7,
+      "avgTime": 27.4,
+      "sideHitSecondsPerMatch": 21.77,
+      "sidePressureSecondsPerMatch": 0.85,
+      "pivot": {
+        "attempts": 21,
+        "recoveries": 15
+      },
+      "tacticsUsed": {
+        "diagonal": 30,
+        "doubleZigzag": 10,
+        "zigzag": 9,
+        "pivot": 22,
+        "flank": 3,
+        "escape": 8,
+        "counter": 20,
+        "reposition": 11,
+        "sidestep": 3,
+        "direct": 1
+      }
+    }
+  },
+  "trainedMatches": 120,
+  "trained": {
+    "direct": {
+      "label": "直進型",
+      "matches": 30,
+      "aiWins": 11,
+      "aiLosses": 19,
+      "draws": 0,
+      "winRate": 36.7,
+      "opponentRingOut": 36.7,
+      "aiRingOut": 46.7,
+      "avgTime": 18.9,
+      "sideHitSecondsPerMatch": 0.96,
+      "sidePressureSecondsPerMatch": 11.33,
+      "pivot": {
+        "attempts": 26,
+        "recoveries": 2
+      },
+      "tacticsUsed": {
+        "diagonal": 30,
+        "pivot": 28,
+        "counter": 29,
+        "escape": 16,
+        "sidestep": 15,
+        "doubleZigzag": 6,
+        "flank": 5,
+        "direct": 1,
+        "zigzag": 1
+      }
+    },
+    "retreat": {
+      "label": "後退型",
+      "matches": 30,
+      "aiWins": 30,
+      "aiLosses": 0,
+      "draws": 0,
+      "winRate": 100,
+      "opponentRingOut": 100,
+      "aiRingOut": 0,
+      "avgTime": 5.6,
+      "sideHitSecondsPerMatch": 0.16,
+      "sidePressureSecondsPerMatch": 0.03,
+      "pivot": {
+        "attempts": 3,
+        "recoveries": 2
+      },
+      "tacticsUsed": {
+        "counter": 30,
+        "diagonal": 29,
+        "zigzag": 30,
+        "doubleZigzag": 14,
+        "escape": 4,
+        "pivot": 3,
+        "reposition": 3
+      }
+    },
+    "turn": {
+      "label": "旋回型",
+      "matches": 30,
+      "aiWins": 30,
+      "aiLosses": 0,
+      "draws": 0,
+      "winRate": 100,
+      "opponentRingOut": 100,
+      "aiRingOut": 0,
+      "avgTime": 7.1,
+      "sideHitSecondsPerMatch": 1.1,
+      "sidePressureSecondsPerMatch": 0.79,
+      "pivot": {
+        "attempts": 17,
+        "recoveries": 13
+      },
+      "tacticsUsed": {
+        "diagonal": 30,
+        "pivot": 17,
+        "zigzag": 16,
+        "doubleZigzag": 21,
+        "counter": 11,
+        "escape": 7,
+        "reposition": 2,
+        "sidestep": 1,
+        "flank": 1,
+        "direct": 1
+      }
+    },
+    "random": {
+      "label": "不規則型",
+      "matches": 30,
+      "aiWins": 30,
+      "aiLosses": 0,
+      "draws": 0,
+      "winRate": 100,
+      "opponentRingOut": 100,
+      "aiRingOut": 0,
+      "avgTime": 6.1,
+      "sideHitSecondsPerMatch": 1.56,
+      "sidePressureSecondsPerMatch": 0.38,
+      "pivot": {
+        "attempts": 9,
+        "recoveries": 7
+      },
+      "tacticsUsed": {
+        "diagonal": 30,
+        "doubleZigzag": 25,
+        "counter": 18,
+        "zigzag": 11,
+        "flank": 3,
+        "pivot": 10,
+        "reposition": 3,
+        "escape": 6,
+        "direct": 1
+      }
+    },
+    "counter": {
+      "label": "カウンター型",
+      "matches": 30,
+      "aiWins": 9,
+      "aiLosses": 21,
+      "draws": 0,
+      "winRate": 30,
+      "opponentRingOut": 30,
+      "aiRingOut": 70,
+      "avgTime": 14.5,
+      "sideHitSecondsPerMatch": 0,
+      "sidePressureSecondsPerMatch": 0.12,
+      "pivot": {
+        "attempts": 2,
+        "recoveries": 1
+      },
+      "tacticsUsed": {
+        "doubleZigzag": 22,
+        "sidestep": 21,
+        "escape": 23,
+        "diagonal": 28,
+        "counter": 30,
+        "zigzag": 28,
+        "flank": 20,
+        "pivot": 2,
+        "reposition": 3,
+        "direct": 4
+      }
+    },
+    "strong": {
+      "label": "高出力直進型",
+      "matches": 30,
+      "aiWins": 2,
+      "aiLosses": 28,
+      "draws": 0,
+      "winRate": 6.7,
+      "opponentRingOut": 6.7,
+      "aiRingOut": 60,
+      "avgTime": 26.8,
+      "sideHitSecondsPerMatch": 0.47,
+      "sidePressureSecondsPerMatch": 22.85,
+      "pivot": {
+        "attempts": 26,
+        "recoveries": 1
+      },
+      "tacticsUsed": {
+        "pivot": 28,
+        "escape": 18,
+        "diagonal": 30,
+        "sidestep": 15,
+        "counter": 29,
+        "flank": 3,
+        "doubleZigzag": 7
+      }
+    },
+    "flanker": {
+      "label": "側面狙い型",
+      "matches": 30,
+      "aiWins": 22,
+      "aiLosses": 7,
+      "draws": 1,
+      "winRate": 73.3,
+      "opponentRingOut": 40,
+      "aiRingOut": 0,
+      "avgTime": 38.9,
+      "sideHitSecondsPerMatch": 34.29,
+      "sidePressureSecondsPerMatch": 1.06,
+      "pivot": {
+        "attempts": 25,
+        "recoveries": 23
+      },
+      "tacticsUsed": {
+        "diagonal": 30,
+        "pivot": 27,
+        "counter": 27,
+        "direct": 3,
+        "escape": 12,
+        "flank": 2,
+        "zigzag": 6,
+        "doubleZigzag": 5
+      }
+    }
+  },
+  "freshHeldOut": {
+    "direct": {
+      "label": "直進型",
+      "matches": 30,
+      "aiWins": 12,
+      "aiLosses": 18,
+      "draws": 0,
+      "winRate": 40,
+      "opponentRingOut": 40,
+      "aiRingOut": 60,
+      "avgTime": 5.2,
+      "sideHitSecondsPerMatch": 0.87,
+      "sidePressureSecondsPerMatch": 0.86,
+      "pivot": {
+        "attempts": 15,
+        "recoveries": 0
+      },
+      "tacticsUsed": {
+        "sidestep": 17,
+        "escape": 18,
+        "diagonal": 30,
+        "counter": 28,
+        "flank": 6,
+        "pivot": 16,
+        "reposition": 8,
+        "doubleZigzag": 1,
+        "zigzag": 3,
+        "direct": 3
+      }
+    },
+    "retreat": {
+      "label": "後退型",
+      "matches": 30,
+      "aiWins": 30,
+      "aiLosses": 0,
+      "draws": 0,
+      "winRate": 100,
+      "opponentRingOut": 100,
+      "aiRingOut": 0,
+      "avgTime": 7.8,
+      "sideHitSecondsPerMatch": 0,
+      "sidePressureSecondsPerMatch": 0.17,
+      "pivot": {
+        "attempts": 9,
+        "recoveries": 7
+      },
+      "tacticsUsed": {
+        "counter": 30,
+        "diagonal": 29,
+        "zigzag": 30,
+        "doubleZigzag": 19,
+        "reposition": 11,
+        "pivot": 9,
+        "escape": 12,
+        "direct": 2
+      }
+    },
+    "turn": {
+      "label": "旋回型",
+      "matches": 30,
+      "aiWins": 29,
+      "aiLosses": 1,
+      "draws": 0,
+      "winRate": 96.7,
+      "opponentRingOut": 96.7,
+      "aiRingOut": 3.3,
+      "avgTime": 8.9,
+      "sideHitSecondsPerMatch": 0.78,
+      "sidePressureSecondsPerMatch": 1.14,
+      "pivot": {
+        "attempts": 16,
+        "recoveries": 13
+      },
+      "tacticsUsed": {
+        "pivot": 17,
+        "diagonal": 30,
+        "flank": 1,
+        "reposition": 14,
+        "counter": 14,
+        "zigzag": 16,
+        "escape": 12,
+        "doubleZigzag": 18,
+        "direct": 1
+      }
+    },
+    "random": {
+      "label": "不規則型",
+      "matches": 30,
+      "aiWins": 30,
+      "aiLosses": 0,
+      "draws": 0,
+      "winRate": 100,
+      "opponentRingOut": 100,
+      "aiRingOut": 0,
+      "avgTime": 6.2,
+      "sideHitSecondsPerMatch": 1.49,
+      "sidePressureSecondsPerMatch": 0.35,
+      "pivot": {
+        "attempts": 8,
+        "recoveries": 8
+      },
+      "tacticsUsed": {
+        "diagonal": 29,
+        "doubleZigzag": 23,
+        "counter": 18,
+        "zigzag": 16,
+        "pivot": 8,
+        "reposition": 12,
+        "flank": 5,
+        "escape": 9,
+        "sidestep": 1,
+        "direct": 1
+      }
+    },
+    "counter": {
+      "label": "カウンター型",
+      "matches": 30,
+      "aiWins": 2,
+      "aiLosses": 28,
+      "draws": 0,
+      "winRate": 6.7,
+      "opponentRingOut": 6.7,
+      "aiRingOut": 93.3,
+      "avgTime": 10.9,
+      "sideHitSecondsPerMatch": 0.29,
+      "sidePressureSecondsPerMatch": 0.21,
+      "pivot": {
+        "attempts": 3,
+        "recoveries": 3
+      },
+      "tacticsUsed": {
+        "sidestep": 28,
+        "escape": 30,
+        "counter": 30,
+        "diagonal": 28,
+        "flank": 22,
+        "zigzag": 30,
+        "pivot": 3,
+        "reposition": 6,
+        "doubleZigzag": 20,
+        "direct": 7
+      }
+    },
+    "strong": {
+      "label": "高出力直進型",
+      "matches": 30,
+      "aiWins": 16,
+      "aiLosses": 14,
+      "draws": 0,
+      "winRate": 53.3,
+      "opponentRingOut": 53.3,
+      "aiRingOut": 46.7,
+      "avgTime": 4.6,
+      "sideHitSecondsPerMatch": 1.05,
+      "sidePressureSecondsPerMatch": 0.77,
+      "pivot": {
+        "attempts": 17,
+        "recoveries": 0
+      },
+      "tacticsUsed": {
+        "diagonal": 30,
+        "pivot": 18,
+        "counter": 27,
+        "sidestep": 14,
+        "escape": 14,
+        "flank": 10,
+        "zigzag": 2,
+        "reposition": 4,
+        "doubleZigzag": 1,
+        "direct": 3
+      }
+    },
+    "flanker": {
+      "label": "側面狙い型",
+      "matches": 30,
+      "aiWins": 26,
+      "aiLosses": 4,
+      "draws": 0,
+      "winRate": 86.7,
+      "opponentRingOut": 50,
+      "aiRingOut": 0,
+      "avgTime": 33.9,
+      "sideHitSecondsPerMatch": 28.3,
+      "sidePressureSecondsPerMatch": 1.03,
+      "pivot": {
+        "attempts": 24,
+        "recoveries": 20
+      },
+      "tacticsUsed": {
+        "flank": 4,
+        "pivot": 24,
+        "counter": 24,
+        "direct": 3,
+        "diagonal": 29,
+        "doubleZigzag": 8,
+        "zigzag": 9,
+        "escape": 13,
+        "reposition": 11,
+        "sidestep": 1
+      }
+    }
+  },
+  "trainedPriorities": {
+    "direct": 1.145,
+    "zigzag": 1.458,
+    "flank": 1.024,
+    "diagonal": 2.25,
+    "counter": 1.599,
+    "doubleZigzag": 1.263,
+    "reposition": 0.782,
+    "escape": 1.44,
+    "pivot": 1.558,
+    "sidestep": 0.699
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "sumo500",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "node scripts/check-source.mjs",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test src/*.test.js",
+    "eval": "node scripts/headless-eval.mjs 30 --learning"
+  },
+  "devDependencies": {
+    "vite": "6.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

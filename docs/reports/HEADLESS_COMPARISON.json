@@ -1,0 +1,92 @@
+{
+  "baseline": {
+    "label": "baseline",
+    "rows": {
+      "direct": {
+        "ai": 0,
+        "player": 3,
+        "draw": 7,
+        "avgTime": 40.6,
+        "avgSwitches": 4.3,
+        "ringOut": 3
+      },
+      "retreat": {
+        "ai": 0,
+        "player": 0,
+        "draw": 10,
+        "avgTime": 58,
+        "avgSwitches": 3.5,
+        "ringOut": 0
+      },
+      "turn": {
+        "ai": 0,
+        "player": 0,
+        "draw": 10,
+        "avgTime": 58,
+        "avgSwitches": 4.1,
+        "ringOut": 0
+      },
+      "counter": {
+        "ai": 0,
+        "player": 0,
+        "draw": 10,
+        "avgTime": 58,
+        "avgSwitches": 3.9,
+        "ringOut": 0
+      },
+      "random": {
+        "ai": 0,
+        "player": 0,
+        "draw": 10,
+        "avgTime": 58,
+        "avgSwitches": 4.5,
+        "ringOut": 0
+      }
+    }
+  },
+  "improved": {
+    "label": "improved",
+    "rows": {
+      "direct": {
+        "ai": 0,
+        "player": 1,
+        "draw": 9,
+        "avgTime": 52.2,
+        "avgSwitches": 1.1,
+        "ringOut": 1
+      },
+      "retreat": {
+        "ai": 0,
+        "player": 3,
+        "draw": 7,
+        "avgTime": 40.6,
+        "avgSwitches": 1.2,
+        "ringOut": 3
+      },
+      "turn": {
+        "ai": 1,
+        "player": 0,
+        "draw": 9,
+        "avgTime": 52.2,
+        "avgSwitches": 0.9,
+        "ringOut": 1
+      },
+      "counter": {
+        "ai": 0,
+        "player": 0,
+        "draw": 10,
+        "avgTime": 58,
+        "avgSwitches": 1,
+        "ringOut": 0
+      },
+      "random": {
+        "ai": 1,
+        "player": 1,
+        "draw": 8,
+        "avgTime": 46.4,
+        "avgSwitches": 1.1,
+        "ringOut": 2
+      }
+    }
+  }
+}

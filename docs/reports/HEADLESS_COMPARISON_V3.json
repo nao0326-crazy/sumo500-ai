@@ -1,0 +1,614 @@
+{
+  "previous": {
+    "label": "second-improved",
+    "rows": {
+      "direct": {
+        "matches": 30,
+        "aiWins": 1,
+        "playerWins": 0,
+        "draws": 29,
+        "winRate": 3.3,
+        "aiRingOutRate": 0,
+        "opponentRingOutRate": 3.3,
+        "avgTime": 56.17,
+        "avgSwitches": 5.13,
+        "aiOutBeforeTactic": {},
+        "aiOutMargins": [],
+        "attackSuccessRate": 3.3,
+        "zigzag": {
+          "attempts": 3,
+          "successes": 3
+        },
+        "escape": {
+          "attempts": 10,
+          "recoveries": 10
+        },
+        "tactic": {
+          "reposition": {
+            "attempts": 29,
+            "executionSeconds": 1560.3999999999485,
+            "executions": 29,
+            "stateImproved": 29
+          },
+          "doubleZigzag": {
+            "attempts": 30,
+            "executionSeconds": 46.91666666666664,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "diagonal": {
+            "attempts": 30,
+            "executionSeconds": 37.39999999999999,
+            "executions": 30,
+            "stateImproved": 29
+          },
+          "escape": {
+            "attempts": 10,
+            "executionSeconds": 20.716666666666644,
+            "executions": 10,
+            "stateImproved": 10
+          },
+          "direct": {
+            "attempts": 16,
+            "executionSeconds": 17.59999999999999,
+            "executions": 15,
+            "stateImproved": 14
+          },
+          "zigzag": {
+            "attempts": 3,
+            "executionSeconds": 2.2166666666666686,
+            "executions": 3,
+            "stateImproved": 3
+          }
+        }
+      },
+      "retreat": {
+        "matches": 30,
+        "aiWins": 5,
+        "playerWins": 0,
+        "draws": 25,
+        "winRate": 16.7,
+        "aiRingOutRate": 0,
+        "opponentRingOutRate": 16.7,
+        "avgTime": 49.51,
+        "avgSwitches": 3.6,
+        "aiOutBeforeTactic": {},
+        "aiOutMargins": [],
+        "attackSuccessRate": 16.7,
+        "zigzag": {
+          "attempts": 30,
+          "successes": 30
+        },
+        "escape": {
+          "attempts": 6,
+          "recoveries": 5
+        },
+        "tactic": {
+          "zigzag": {
+            "attempts": 30,
+            "executionSeconds": 50.1833333333333,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "reposition": {
+            "attempts": 27,
+            "executionSeconds": 1366.7999999999554,
+            "executions": 27,
+            "stateImproved": 27
+          },
+          "doubleZigzag": {
+            "attempts": 30,
+            "executionSeconds": 56.14999999999995,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "diagonal": {
+            "attempts": 2,
+            "executionSeconds": 1.7000000000000006,
+            "executions": 2,
+            "stateImproved": 2
+          },
+          "escape": {
+            "attempts": 6,
+            "executionSeconds": 10.616666666666658,
+            "executions": 6,
+            "stateImproved": 6
+          }
+        }
+      },
+      "turn": {
+        "matches": 30,
+        "aiWins": 2,
+        "playerWins": 1,
+        "draws": 27,
+        "winRate": 6.7,
+        "aiRingOutRate": 3.3,
+        "opponentRingOutRate": 6.7,
+        "avgTime": 52.76,
+        "avgSwitches": 3.9,
+        "aiOutBeforeTactic": {
+          "escape": 1
+        },
+        "aiOutMargins": [
+          -0.7374862903090786
+        ],
+        "attackSuccessRate": 6.7,
+        "zigzag": {
+          "attempts": 2,
+          "successes": 2
+        },
+        "escape": {
+          "attempts": 5,
+          "recoveries": 5
+        },
+        "tactic": {
+          "reposition": {
+            "attempts": 28,
+            "executionSeconds": 1478.4666666666174,
+            "executions": 27,
+            "stateImproved": 27
+          },
+          "doubleZigzag": {
+            "attempts": 30,
+            "executionSeconds": 45.29999999999997,
+            "executions": 30,
+            "stateImproved": 29
+          },
+          "diagonal": {
+            "attempts": 30,
+            "executionSeconds": 35.51666666666669,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "direct": {
+            "attempts": 13,
+            "executionSeconds": 10.233333333333333,
+            "executions": 12,
+            "stateImproved": 11
+          },
+          "escape": {
+            "attempts": 6,
+            "executionSeconds": 10.949999999999985,
+            "executions": 5,
+            "stateImproved": 5
+          },
+          "zigzag": {
+            "attempts": 2,
+            "executionSeconds": 2.200000000000001,
+            "executions": 2,
+            "stateImproved": 2
+          }
+        }
+      },
+      "counter": {
+        "matches": 30,
+        "aiWins": 3,
+        "playerWins": 1,
+        "draws": 26,
+        "winRate": 10,
+        "aiRingOutRate": 3.3,
+        "opponentRingOutRate": 10,
+        "avgTime": 51.91,
+        "avgSwitches": 4.4,
+        "aiOutBeforeTactic": {
+          "reposition": 1
+        },
+        "aiOutMargins": [
+          -0.026710503617039194
+        ],
+        "attackSuccessRate": 10,
+        "zigzag": {
+          "attempts": 22,
+          "successes": 22
+        },
+        "escape": {
+          "attempts": 9,
+          "recoveries": 9
+        },
+        "tactic": {
+          "reposition": {
+            "attempts": 30,
+            "executionSeconds": 1422.1333333332877,
+            "executions": 30,
+            "stateImproved": 29
+          },
+          "doubleZigzag": {
+            "attempts": 30,
+            "executionSeconds": 61.499999999999936,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "zigzag": {
+            "attempts": 22,
+            "executionSeconds": 24.96666666666667,
+            "executions": 22,
+            "stateImproved": 22
+          },
+          "escape": {
+            "attempts": 9,
+            "executionSeconds": 19.749999999999975,
+            "executions": 9,
+            "stateImproved": 9
+          },
+          "diagonal": {
+            "attempts": 30,
+            "executionSeconds": 27.2,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "direct": {
+            "attempts": 2,
+            "executionSeconds": 0.9166666666666665,
+            "executions": 2,
+            "stateImproved": 2
+          },
+          "counter": {
+            "attempts": 1,
+            "executionSeconds": 0.8333333333333343,
+            "executions": 1,
+            "stateImproved": 1
+          }
+        }
+      },
+      "random": {
+        "matches": 30,
+        "aiWins": 2,
+        "playerWins": 0,
+        "draws": 28,
+        "winRate": 6.7,
+        "aiRingOutRate": 0,
+        "opponentRingOutRate": 6.7,
+        "avgTime": 54.91,
+        "avgSwitches": 4.53,
+        "aiOutBeforeTactic": {},
+        "aiOutMargins": [],
+        "attackSuccessRate": 6.7,
+        "zigzag": {
+          "attempts": 18,
+          "successes": 18
+        },
+        "escape": {
+          "attempts": 7,
+          "recoveries": 7
+        },
+        "tactic": {
+          "reposition": {
+            "attempts": 30,
+            "executionSeconds": 1524.1666666666163,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "doubleZigzag": {
+            "attempts": 30,
+            "executionSeconds": 52.99999999999995,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "diagonal": {
+            "attempts": 23,
+            "executionSeconds": 21.71666666666668,
+            "executions": 23,
+            "stateImproved": 23
+          },
+          "escape": {
+            "attempts": 7,
+            "executionSeconds": 17.916666666666636,
+            "executions": 7,
+            "stateImproved": 7
+          },
+          "zigzag": {
+            "attempts": 18,
+            "executionSeconds": 22.16666666666666,
+            "executions": 18,
+            "stateImproved": 18
+          },
+          "direct": {
+            "attempts": 13,
+            "executionSeconds": 8.333333333333336,
+            "executions": 12,
+            "stateImproved": 12
+          }
+        }
+      }
+    }
+  },
+  "current": {
+    "label": "third-improved",
+    "rows": {
+      "direct": {
+        "matches": 30,
+        "aiWins": 3,
+        "playerWins": 0,
+        "draws": 27,
+        "winRate": 10,
+        "aiRingOutRate": 0,
+        "opponentRingOutRate": 10,
+        "avgTime": 52.97,
+        "avgSwitches": 3.87,
+        "aiOutBeforeTactic": {},
+        "aiOutMargins": [],
+        "attackSuccessRate": 10,
+        "zigzag": {
+          "attempts": 3,
+          "successes": 3
+        },
+        "escape": {
+          "attempts": 8,
+          "recoveries": 8
+        },
+        "tactic": {
+          "reposition": {
+            "attempts": 30,
+            "executionSeconds": 1480.799999999951,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "diagonal": {
+            "attempts": 28,
+            "executionSeconds": 32.68333333333333,
+            "executions": 28,
+            "stateImproved": 28
+          },
+          "doubleZigzag": {
+            "attempts": 29,
+            "executionSeconds": 39.083333333333314,
+            "executions": 29,
+            "stateImproved": 28
+          },
+          "direct": {
+            "attempts": 20,
+            "executionSeconds": 19.183333333333334,
+            "executions": 18,
+            "stateImproved": 17
+          },
+          "escape": {
+            "attempts": 8,
+            "executionSeconds": 14.599999999999987,
+            "executions": 8,
+            "stateImproved": 8
+          },
+          "zigzag": {
+            "attempts": 3,
+            "executionSeconds": 2.833333333333337,
+            "executions": 3,
+            "stateImproved": 3
+          }
+        }
+      },
+      "retreat": {
+        "matches": 30,
+        "aiWins": 3,
+        "playerWins": 0,
+        "draws": 27,
+        "winRate": 10,
+        "aiRingOutRate": 0,
+        "opponentRingOutRate": 10,
+        "avgTime": 53.07,
+        "avgSwitches": 5.73,
+        "aiOutBeforeTactic": {},
+        "aiOutMargins": [],
+        "attackSuccessRate": 10,
+        "zigzag": {
+          "attempts": 29,
+          "successes": 29
+        },
+        "escape": {
+          "attempts": 13,
+          "recoveries": 12
+        },
+        "tactic": {
+          "reposition": {
+            "attempts": 30,
+            "executionSeconds": 1429.4999999999536,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "zigzag": {
+            "attempts": 29,
+            "executionSeconds": 66.43333333333324,
+            "executions": 29,
+            "stateImproved": 29
+          },
+          "doubleZigzag": {
+            "attempts": 30,
+            "executionSeconds": 64.01666666666658,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "escape": {
+            "attempts": 13,
+            "executionSeconds": 29.466666666666633,
+            "executions": 13,
+            "stateImproved": 13
+          },
+          "diagonal": {
+            "attempts": 2,
+            "executionSeconds": 2.6333333333333337,
+            "executions": 2,
+            "stateImproved": 2
+          }
+        }
+      },
+      "turn": {
+        "matches": 30,
+        "aiWins": 1,
+        "playerWins": 0,
+        "draws": 29,
+        "winRate": 3.3,
+        "aiRingOutRate": 0,
+        "opponentRingOutRate": 3.3,
+        "avgTime": 56.23,
+        "avgSwitches": 3.8,
+        "aiOutBeforeTactic": {},
+        "aiOutMargins": [],
+        "attackSuccessRate": 3.3,
+        "zigzag": {
+          "attempts": 1,
+          "successes": 1
+        },
+        "escape": {
+          "attempts": 5,
+          "recoveries": 4
+        },
+        "tactic": {
+          "reposition": {
+            "attempts": 29,
+            "executionSeconds": 1591.5999999999467,
+            "executions": 29,
+            "stateImproved": 29
+          },
+          "doubleZigzag": {
+            "attempts": 28,
+            "executionSeconds": 44.11666666666664,
+            "executions": 28,
+            "stateImproved": 27
+          },
+          "diagonal": {
+            "attempts": 28,
+            "executionSeconds": 33.20000000000002,
+            "executions": 28,
+            "stateImproved": 28
+          },
+          "escape": {
+            "attempts": 5,
+            "executionSeconds": 6.0166666666666675,
+            "executions": 5,
+            "stateImproved": 5
+          },
+          "direct": {
+            "attempts": 12,
+            "executionSeconds": 11.16666666666667,
+            "executions": 12,
+            "stateImproved": 10
+          },
+          "zigzag": {
+            "attempts": 1,
+            "executionSeconds": 0.8166666666666675,
+            "executions": 1,
+            "stateImproved": 1
+          }
+        }
+      },
+      "counter": {
+        "matches": 30,
+        "aiWins": 3,
+        "playerWins": 0,
+        "draws": 27,
+        "winRate": 10,
+        "aiRingOutRate": 0,
+        "opponentRingOutRate": 10,
+        "avgTime": 52.98,
+        "avgSwitches": 4.17,
+        "aiOutBeforeTactic": {},
+        "aiOutMargins": [],
+        "attackSuccessRate": 10,
+        "zigzag": {
+          "attempts": 17,
+          "successes": 16
+        },
+        "escape": {
+          "attempts": 6,
+          "recoveries": 5
+        },
+        "tactic": {
+          "direct": {
+            "attempts": 1,
+            "executionSeconds": 1.2833333333333337,
+            "executions": 1,
+            "stateImproved": 1
+          },
+          "doubleZigzag": {
+            "attempts": 30,
+            "executionSeconds": 60.79999999999993,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "reposition": {
+            "attempts": 30,
+            "executionSeconds": 1473.4833333332847,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "zigzag": {
+            "attempts": 17,
+            "executionSeconds": 20.099999999999998,
+            "executions": 17,
+            "stateImproved": 16
+          },
+          "diagonal": {
+            "attempts": 28,
+            "executionSeconds": 25.43333333333334,
+            "executions": 28,
+            "stateImproved": 28
+          },
+          "escape": {
+            "attempts": 6,
+            "executionSeconds": 8.283333333333333,
+            "executions": 6,
+            "stateImproved": 6
+          }
+        }
+      },
+      "random": {
+        "matches": 30,
+        "aiWins": 3,
+        "playerWins": 0,
+        "draws": 27,
+        "winRate": 10,
+        "aiRingOutRate": 0,
+        "opponentRingOutRate": 10,
+        "avgTime": 52.98,
+        "avgSwitches": 3.47,
+        "aiOutBeforeTactic": {},
+        "aiOutMargins": [],
+        "attackSuccessRate": 10,
+        "zigzag": {
+          "attempts": 19,
+          "successes": 19
+        },
+        "escape": {
+          "attempts": 4,
+          "recoveries": 3
+        },
+        "tactic": {
+          "reposition": {
+            "attempts": 30,
+            "executionSeconds": 1493.1333333332839,
+            "executions": 30,
+            "stateImproved": 29
+          },
+          "doubleZigzag": {
+            "attempts": 30,
+            "executionSeconds": 44.69999999999998,
+            "executions": 30,
+            "stateImproved": 30
+          },
+          "diagonal": {
+            "attempts": 22,
+            "executionSeconds": 20.466666666666676,
+            "executions": 22,
+            "stateImproved": 22
+          },
+          "zigzag": {
+            "attempts": 19,
+            "executionSeconds": 18.450000000000014,
+            "executions": 19,
+            "stateImproved": 19
+          },
+          "escape": {
+            "attempts": 4,
+            "executionSeconds": 5.216666666666667,
+            "executions": 4,
+            "stateImproved": 4
+          },
+          "direct": {
+            "attempts": 10,
+            "executionSeconds": 7.566666666666665,
+            "executions": 7,
+            "stateImproved": 7
+          }
+        }
+      }
+    }
+  }
+}
