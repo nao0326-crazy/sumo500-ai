@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/battle", "destination": "/" },
+    { "source": "/result", "destination": "/" },
+    { "source": "/growth", "destination": "/" }
+  ]
+}
