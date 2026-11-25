@@ -1,0 +1,488 @@
+{
+  "previous": {
+    "label": "previous-improved",
+    "rows": {
+      "direct": {
+        "matches": 30,
+        "aiWins": 0,
+        "playerWins": 2,
+        "draws": 28,
+        "winRate": 0,
+        "ringOutRate": 6.7,
+        "avgTime": 54.13,
+        "avgSwitches": 0.97,
+        "zigzag": {
+          "attempts": 1,
+          "successes": 0,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 29,
+          "recoveries": 0
+        },
+        "tactic": {
+          "counter": {
+            "selections": 30,
+            "executionSeconds": 978.3333333333163,
+            "executions": 30,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "escape": {
+            "selections": 29,
+            "executionSeconds": 686.3999999999959,
+            "executions": 29,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "diagonal": {
+            "selections": 2,
+            "executionSeconds": 25.3333333333332,
+            "executions": 2,
+            "wins": 0,
+            "stateImproved": 1
+          },
+          "zigzag": {
+            "selections": 1,
+            "executionSeconds": 2.3999999999999964,
+            "executions": 1,
+            "wins": 0,
+            "stateImproved": 0
+          }
+        }
+      },
+      "retreat": {
+        "matches": 30,
+        "aiWins": 2,
+        "playerWins": 6,
+        "draws": 22,
+        "winRate": 6.7,
+        "ringOutRate": 26.7,
+        "avgTime": 42.53,
+        "avgSwitches": 0.73,
+        "zigzag": {
+          "attempts": 6,
+          "successes": 2,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 26,
+          "recoveries": 0
+        },
+        "tactic": {
+          "counter": {
+            "selections": 28,
+            "executionSeconds": 914.6999999999839,
+            "executions": 28,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "escape": {
+            "selections": 27,
+            "executionSeconds": 559.7666666666632,
+            "executions": 26,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "zigzag": {
+            "selections": 7,
+            "executionSeconds": 14.149999999999977,
+            "executions": 6,
+            "wins": 0,
+            "stateImproved": 2
+          }
+        }
+      },
+      "turn": {
+        "matches": 30,
+        "aiWins": 1,
+        "playerWins": 0,
+        "draws": 29,
+        "winRate": 3.3,
+        "ringOutRate": 3.3,
+        "avgTime": 56.07,
+        "avgSwitches": 0.97,
+        "zigzag": {
+          "attempts": 1,
+          "successes": 1,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 29,
+          "recoveries": 0
+        },
+        "tactic": {
+          "counter": {
+            "selections": 27,
+            "executionSeconds": 881.9666666666515,
+            "executions": 27,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "escape": {
+            "selections": 29,
+            "executionSeconds": 792.016666666659,
+            "executions": 29,
+            "wins": 0,
+            "stateImproved": 2
+          },
+          "diagonal": {
+            "selections": 2,
+            "executionSeconds": 8.016666666666648,
+            "executions": 2,
+            "wins": 0,
+            "stateImproved": 2
+          },
+          "zigzag": {
+            "selections": 1,
+            "executionSeconds": 3.0666666666666607,
+            "executions": 1,
+            "wins": 0,
+            "stateImproved": 1
+          }
+        }
+      },
+      "counter": {
+        "matches": 30,
+        "aiWins": 0,
+        "playerWins": 1,
+        "draws": 29,
+        "winRate": 0,
+        "ringOutRate": 3.3,
+        "avgTime": 56.07,
+        "avgSwitches": 1.07,
+        "zigzag": {
+          "attempts": 1,
+          "successes": 0,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 28,
+          "recoveries": 0
+        },
+        "tactic": {
+          "diagonal": {
+            "selections": 5,
+            "executionSeconds": 83.44999999999955,
+            "executions": 5,
+            "wins": 0,
+            "stateImproved": 5
+          },
+          "counter": {
+            "selections": 28,
+            "executionSeconds": 913.9666666666508,
+            "executions": 28,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "escape": {
+            "selections": 30,
+            "executionSeconds": 717.4166666666594,
+            "executions": 28,
+            "wins": 0,
+            "stateImproved": 2
+          },
+          "zigzag": {
+            "selections": 1,
+            "executionSeconds": 2.466666666666663,
+            "executions": 1,
+            "wins": 0,
+            "stateImproved": 0
+          }
+        }
+      },
+      "random": {
+        "matches": 30,
+        "aiWins": 0,
+        "playerWins": 4,
+        "draws": 26,
+        "winRate": 0,
+        "ringOutRate": 13.3,
+        "avgTime": 50.27,
+        "avgSwitches": 0.9,
+        "zigzag": {
+          "attempts": 2,
+          "successes": 0,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 29,
+          "recoveries": 0
+        },
+        "tactic": {
+          "counter": {
+            "selections": 30,
+            "executionSeconds": 979.1833333333163,
+            "executions": 30,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "escape": {
+            "selections": 30,
+            "executionSeconds": 636.4833333333294,
+            "executions": 29,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "zigzag": {
+            "selections": 2,
+            "executionSeconds": 4.799999999999993,
+            "executions": 2,
+            "wins": 0,
+            "stateImproved": 0
+          },
+          "diagonal": {
+            "selections": 2,
+            "executionSeconds": 25.08333333333321,
+            "executions": 1,
+            "wins": 0,
+            "stateImproved": 1
+          }
+        }
+      }
+    }
+  },
+  "current": {
+    "label": "second-improved",
+    "rows": {
+      "direct": {
+        "matches": 30,
+        "aiWins": 2,
+        "playerWins": 0,
+        "draws": 28,
+        "winRate": 6.7,
+        "ringOutRate": 6.7,
+        "avgTime": 54.13,
+        "avgSwitches": 0.93,
+        "zigzag": {
+          "attempts": 0,
+          "successes": 0,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 28,
+          "recoveries": 28
+        },
+        "tactic": {
+          "escape": {
+            "selections": 28,
+            "executionSeconds": 1510.9166666666172,
+            "executions": 28,
+            "wins": 0,
+            "stateImproved": 28
+          },
+          "diagonal": {
+            "selections": 28,
+            "executionSeconds": 113.08333333333309,
+            "executions": 28,
+            "wins": 0,
+            "stateImproved": 28
+          },
+          "direct": {
+            "selections": 2,
+            "executionSeconds": 5.366666666666657,
+            "executions": 2,
+            "wins": 0,
+            "stateImproved": 2
+          }
+        }
+      },
+      "retreat": {
+        "matches": 30,
+        "aiWins": 28,
+        "playerWins": 0,
+        "draws": 2,
+        "winRate": 93.3,
+        "ringOutRate": 93.3,
+        "avgTime": 3.87,
+        "avgSwitches": 0.03,
+        "zigzag": {
+          "attempts": 28,
+          "successes": 28,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 1,
+          "recoveries": 1
+        },
+        "tactic": {
+          "zigzag": {
+            "selections": 28,
+            "executionSeconds": 83.06666666666646,
+            "executions": 28,
+            "wins": 0,
+            "stateImproved": 28
+          },
+          "doubleZigzag": {
+            "selections": 1,
+            "executionSeconds": 57.99999999999799,
+            "executions": 1,
+            "wins": 0,
+            "stateImproved": 1
+          },
+          "escape": {
+            "selections": 1,
+            "executionSeconds": 54.11666666666488,
+            "executions": 1,
+            "wins": 0,
+            "stateImproved": 1
+          },
+          "diagonal": {
+            "selections": 1,
+            "executionSeconds": 3.8833333333333244,
+            "executions": 1,
+            "wins": 0,
+            "stateImproved": 1
+          }
+        }
+      },
+      "turn": {
+        "matches": 30,
+        "aiWins": 0,
+        "playerWins": 2,
+        "draws": 28,
+        "winRate": 0,
+        "ringOutRate": 6.7,
+        "avgTime": 54.13,
+        "avgSwitches": 0.8,
+        "zigzag": {
+          "attempts": 0,
+          "successes": 0,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 24,
+          "recoveries": 24
+        },
+        "tactic": {
+          "escape": {
+            "selections": 24,
+            "executionSeconds": 1295.8833333332905,
+            "executions": 24,
+            "wins": 0,
+            "stateImproved": 24
+          },
+          "diagonal": {
+            "selections": 30,
+            "executionSeconds": 336.5166666666584,
+            "executions": 30,
+            "wins": 0,
+            "stateImproved": 30
+          },
+          "reposition": {
+            "selections": 2,
+            "executionSeconds": 16.383333333333304,
+            "executions": 2,
+            "wins": 0,
+            "stateImproved": 2
+          }
+        }
+      },
+      "counter": {
+        "matches": 30,
+        "aiWins": 5,
+        "playerWins": 0,
+        "draws": 25,
+        "winRate": 16.7,
+        "ringOutRate": 16.7,
+        "avgTime": 48.33,
+        "avgSwitches": 0.87,
+        "zigzag": {
+          "attempts": 3,
+          "successes": 3,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 25,
+          "recoveries": 25
+        },
+        "tactic": {
+          "escape": {
+            "selections": 25,
+            "executionSeconds": 1349.8833333332886,
+            "executions": 25,
+            "wins": 0,
+            "stateImproved": 25
+          },
+          "diagonal": {
+            "selections": 25,
+            "executionSeconds": 99.76666666666644,
+            "executions": 25,
+            "wins": 0,
+            "stateImproved": 25
+          },
+          "direct": {
+            "selections": 2,
+            "executionSeconds": 5.366666666666657,
+            "executions": 2,
+            "wins": 0,
+            "stateImproved": 2
+          },
+          "zigzag": {
+            "selections": 3,
+            "executionSeconds": 8.899999999999983,
+            "executions": 3,
+            "wins": 0,
+            "stateImproved": 3
+          },
+          "reposition": {
+            "selections": 1,
+            "executionSeconds": 0.35,
+            "executions": 0,
+            "wins": 0,
+            "stateImproved": 0
+          }
+        }
+      },
+      "random": {
+        "matches": 30,
+        "aiWins": 7,
+        "playerWins": 1,
+        "draws": 22,
+        "winRate": 23.3,
+        "ringOutRate": 26.7,
+        "avgTime": 42.53,
+        "avgSwitches": 0.7,
+        "zigzag": {
+          "attempts": 7,
+          "successes": 7,
+          "aiWinExecutions": 0
+        },
+        "escape": {
+          "attempts": 21,
+          "recoveries": 21
+        },
+        "tactic": {
+          "escape": {
+            "selections": 21,
+            "executionSeconds": 1132.8499999999626,
+            "executions": 21,
+            "wins": 0,
+            "stateImproved": 21
+          },
+          "diagonal": {
+            "selections": 23,
+            "executionSeconds": 146.96666666666445,
+            "executions": 23,
+            "wins": 0,
+            "stateImproved": 23
+          },
+          "zigzag": {
+            "selections": 7,
+            "executionSeconds": 20.766666666666627,
+            "executions": 7,
+            "wins": 0,
+            "stateImproved": 7
+          },
+          "reposition": {
+            "selections": 1,
+            "executionSeconds": 6.6999999999999815,
+            "executions": 1,
+            "wins": 0,
+            "stateImproved": 1
+          }
+        }
+      }
+    }
+  }
+}
