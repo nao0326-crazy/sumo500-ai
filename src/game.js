@@ -141,7 +141,7 @@ function steerLoad(unit, target, dt) { unit.loadFactor = ema(unit.loadFactor ?? 
 const NO_CONTACT = Object.freeze({ touching: false, force: 0, wedgePlayer: 0, wedgeAI: 0, normal: { x: 0, y: 0 }, point: null });
 
 export class BattleSimulation {
-  constructor(canvas, aiState, { onUpdate, onFinish, sprites = {}, random = null, setup = 'standard', torqueSpeed = 50 } = {}) {
+  constructor(canvas, aiState, { onUpdate, onFinish, sprites = {}, random = null, setup = 'standard', torqueSpeed = 50, aiTorqueSpeed = 50 } = {}) {
     this.canvas = canvas; this.ctx = canvas?.getContext?.('2d') || null; this.aiState = aiState;
     this.onUpdate = onUpdate; this.onFinish = onFinish; this.running = false; this.ended = false; this.paused = false;
     this.random = random;
@@ -161,6 +161,15 @@ export class BattleSimulation {
     } else {
       // NaN, Infinity, non-numeric string, etc.
       this.torqueSpeed = 50;
+    }
+    // AI torqueSpeed: always use default, player-controllable setting is separate
+    if (aiTorqueSpeed === null || aiTorqueSpeed === undefined) {
+      this.aiTorqueSpeed = 50;
+    } else if (Number.isFinite(aiTorqueSpeed)) {
+      this.aiTorqueSpeed = Math.max(0, Math.min(100, aiTorqueSpeed));
+    } else {
+      // NaN, Infinity, non-numeric string, etc.
+      this.aiTorqueSpeed = 50;
     }
     const start = BattleSimulation.startPositions(setup, () => this.rand());
     this.player = robot(start.player.x, start.player.y, start.player.angle, '#ffb04a', '#fff2bf', 'YOU', sprites.player || null);
@@ -475,7 +484,7 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
     const forward = forwardOf(unit); const side = sideOf(unit);
     const mass = unit.mass ?? 1; const inertia = unit.inertia ?? BODY_INERTIA;
     const velocity = { x: unit.vx, y: unit.vy };
-const motorParams = interpolateMotorParams(this.torqueSpeed);
+    const motorParams = interpolateMotorParams(unit === this.ai ? this.aiTorqueSpeed : this.torqueSpeed);
     const MAX_SPEED = motorParams.maxSpeed;
     const DRIVE_ACCEL = motorParams.driveAccel;
     const longitudinalSpeed = dot(velocity, forward);
