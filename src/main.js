@@ -193,8 +193,19 @@ function renderBattle() {
   </section>`, 'battle');
   bindCommon();
   const canvas = document.querySelector('#arena-canvas');
-  const torqueSpeed = settings.torqueSpeedBySetup?.[settings.startSetup] ?? settings.torqueSpeed;
-  battle = new BattleSimulation(canvas, ai, { onUpdate: updateBattleHUD, onFinish: handleFinish, sprites: { player: playerSprite, ai: aiSprite }, setup: settings.startSetup, torqueSpeed });
+  // プレイヤーのトルク設定
+  const playerTorqueSpeed = settings.torqueSpeed;
+  // 相手機体のトルク設定: プリセットか個別設定か
+  const opponentPreset = settings.aiOpponentTorquePreset;
+  let aiTorqueSpeed;
+  if (OPPONENT_TORQUE_PRESETS[opponentPreset] !== undefined) {
+    aiTorqueSpeed = OPPONENT_TORQUE_PRESETS[opponentPreset];
+  } else if (typeof settings.aiTorqueSpeed !== 'undefined' && Number.isFinite(settings.aiTorqueSpeed)) {
+    aiTorqueSpeed = clamp(number(settings.aiTorqueSpeed, DEFAULT_SETTINGS.torqueSpeed), 0, 100);
+  } else {
+    aiTorqueSpeed = DEFAULT_SETTINGS.torqueSpeed;  // 50
+  }
+  battle = new BattleSimulation(canvas, ai, { onUpdate: updateBattleHUD, onFinish: handleFinish, sprites: { player: playerSprite, ai: aiSprite }, setup: settings.startSetup, torqueSpeed: playerTorqueSpeed, aiTorqueSpeed });
   requestAnimationFrame(() => battle?.resize());
   bindStick(document.querySelector('[data-stick="left"]'), 'left');
   bindStick(document.querySelector('[data-stick="right"]'), 'right');
