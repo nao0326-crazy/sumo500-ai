@@ -18,6 +18,10 @@ const MOTOR_GAIN = 4.5;           // slope of the DC-motor torque–speed line
 const WHEEL_HALF_TRACK = 15;      // wheel distance from the centre line
 const WHEEL_AXLE_X = 4;           // axle position along the body (local +x is forward)
 const BODY_INERTIA = 260;       // inertia for 100mm×100mm square robot (kg·mm² → units²)
+// Torque-speed balance settings per machine (0=torque focus, 100=speed focus)
+const TORQUE_SPEED_PRESET_MAX_SPEED = [136, 149.6, 170, 190.4, 204];
+const TORQUE_SPEED_PRESET_DRIVE_ACCEL = [537.5, 488.6, 430, 383.9, 358.3];
+const TORQUE_SPEED_POINTS_S = [0, 25, 50, 75, 100];
 // ---------------------------------------------------------------------------
 const CONTACT_SLOP = 0.32;
 const GRIP_ACCEL = 470;           // μ·g at static load (μ = 1 → effective g = 470 units/s²)
@@ -34,6 +38,26 @@ const norm = (v) => { const length = Math.hypot(v.x, v.y) || 1; return { x: v.x 
 const angleDelta = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
 const smoothstep = (edge0, edge1, x) => { const t = clamp((x - edge0) / (edge1 - edge0), 0, 1); return t * t * (3 - 2 * t); };
 const ema = (current, target, dt, tau) => current + (target - current) * (1 - Math.exp(-dt / tau));
+const interpolateMotorParams = (torqueSpeed) => {
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  if (torqueSpeed <= TORQUE_SPEED_POINTS_S[0]) return { maxSpeed: TORQUE_SPEED_PRESET_MAX_SPEED[0], driveAccel: TORQUE_SPEED_PRESET_DRIVE_ACCEL[0] };
+  if (torqueSpeed >= TORQUE_SPEED_POINTS_S[TORQUE_SPEED_POINTS_S.length - 1]) {
+    return { maxSpeed: TORQUE_SPEED_PRESET_MAX_SPEED[TORQUE_SPEED_PRESET_MAX_SPEED.length - 1], driveAccel: TORQUE_SPEED_PRESET_DRIVE_ACCEL[TORQUE_SPEED_PRESET_DRIVE_ACCEL.length - 1] };
+  }
+  // Find the interval
+  for (let i = 0; i < TORQUE_SPEED_POINTS_S.length - 1; i += 1) {
+    if (torqueSpeed >= TORQUE_SPEED_POINTS_S[i] && torqueSpeed <= TORQUE_SPEED_POINTS_S[i + 1]) {
+      const t = (torqueSpeed - TORQUE_SPEED_POINTS_S[i]) / (TORQUE_SPEED_POINTS_S[i + 1] - TORQUE_SPEED_POINTS_S[i]);
+      // Smoothstep for smooth interpolation
+      const t2 = t * t * (3 - 2 * t);
+      const maxSpeed = TORQUE_SPEED_PRESET_MAX_SPEED[i] * (1 - t2) + TORQUE_SPEED_PRESET_MAX_SPEED[i + 1] * t2;
+      const driveAccel = TORQUE_SPEED_PRESET_DRIVE_ACCEL[i] * (1 - t2) + TORQUE_SPEED_PRESET_DRIVE_ACCEL[i + 1] * t2;
+      return { maxSpeed, driveAccel };
+    }
+  }
+  // Fallback (should not reach here)
+  return { maxSpeed: MAX_SPEED, driveAccel: DRIVE_ACCEL };
+};
 const forwardOf = (unit) => ({ x: Math.cos(unit.angle), y: Math.sin(unit.angle) });
 // The canvas y axis points down, so this vector is the robot's RIGHT-hand side.
 const sideOf = (unit) => { const f = forwardOf(unit); return { x: -f.y, y: f.x }; };
@@ -125,6 +149,7 @@ export class BattleSimulation {
     this.tacticId = ''; this.tacticStartedAt = 0; this.tacticLockUntil = 0; this.flankSide = this.rand() > 0.5 ? 1 : -1;
     this.usedTactics = new Set(); this.tacticHistory = []; this.tacticUsage = {}; this.input = { left: 0, right: 0 };
     this.width = 620; this.height = 620;
+this.torqueSpeed = typeof torqueSpeed !== 'undefined' ? torqueSpeed : 50;
     const start = BattleSimulation.startPositions(setup, () => this.rand());
     this.player = robot(start.player.x, start.player.y, start.player.angle, '#ffb04a', '#fff2bf', 'YOU', sprites.player || null);
     this.ai = robot(start.ai.x, start.ai.y, start.ai.angle, '#52d6c5', '#d9fff7', 'KOMA', sprites.ai || null);
@@ -138,7 +163,7 @@ export class BattleSimulation {
   static startPositions(setup, rand = Math.random) {
     if (setup !== 'random') return { player: { x: -112, y: 0, angle: 0 }, ai: { x: 112, y: 0, angle: Math.PI } };
     const offsetY = (rand() - 0.5) * 70; const spread = 96 + rand() * 40;
-    const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
+const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
     return { player: { x: -spread, y: offsetY, angle: yawPlayer }, ai: { x: spread, y: -offsetY, angle: Math.PI + yawAI } };
   }
 
@@ -438,12 +463,15 @@ export class BattleSimulation {
     const forward = forwardOf(unit); const side = sideOf(unit);
     const mass = unit.mass ?? 1; const inertia = unit.inertia ?? BODY_INERTIA;
     const velocity = { x: unit.vx, y: unit.vy };
+const motorParams = interpolateMotorParams(this.torqueSpeed);
+    const MAX_SPEED = motorParams.maxSpeed;
+    const DRIVE_ACCEL = motorParams.driveAccel;
     const longitudinalSpeed = dot(velocity, forward);
     const lateralSpeed = dot(velocity, side);
     // Left wheel sits at local y = -half-track, right wheel at +half-track.
     const leftSpeed = longitudinalSpeed + unit.omega * WHEEL_HALF_TRACK;
     const rightSpeed = longitudinalSpeed - unit.omega * WHEEL_HALF_TRACK;
-    const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
+const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
     const gripPerWheel = GRIP_ACCEL * mass * load / 2;
     const motorLimit = DRIVE_ACCEL * (unit.drivePower ?? 1) * mass / 2;
     const motor = (command, wheelSpeed) => clamp((clamp(command ?? 0, -1, 1) * MAX_SPEED - wheelSpeed) * MOTOR_GAIN * mass / 2, -motorLimit, motorLimit);

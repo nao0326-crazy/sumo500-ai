@@ -2,15 +2,21 @@
 // change can never touch the learning record.
 const SETTINGS_KEY = 'sumo500-settings';
 
+// Torque-speed balance settings per machine (0=torque focus, 100=speed focus)
+const TORQUE_SPEED_PRESET_MAX_SPEED = [136, 149.6, 170, 190.4, 204];
+const TORQUE_SPEED_PRESET_DRIVE_ACCEL = [537.5, 488.6, 430, 383.9, 358.3];
+
 export const DEFAULT_SETTINGS = Object.freeze({
   stickSensitivity: 1,     // 0.7 – 1.4: how far the knob must travel for full wheel speed
   deadzone: 0.08,          // 0 – 0.2: ignored stick travel around the centre
   vibration: true,
   showAIInfo: true,
   startSetup: 'standard'   // 'standard' (facing) | 'random' (mirrored random placement)
+  // torqueSpeed: 50 will be added by sanitizeSettings
 });
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
 
 export function sanitizeSettings(raw = {}) {
   const source = raw && typeof raw === 'object' ? raw : {};
@@ -20,7 +26,8 @@ export function sanitizeSettings(raw = {}) {
     deadzone: clamp(number(source.deadzone, DEFAULT_SETTINGS.deadzone), 0, 0.2),
     vibration: typeof source.vibration === 'boolean' ? source.vibration : DEFAULT_SETTINGS.vibration,
     showAIInfo: typeof source.showAIInfo === 'boolean' ? source.showAIInfo : DEFAULT_SETTINGS.showAIInfo,
-    startSetup: source.startSetup === 'random' ? 'random' : 'standard'
+    startSetup: source.startSetup === 'random' ? 'random' : 'standard',
+    torqueSpeed: clamp(number(source.torqueSpeed, DEFAULT_SETTINGS.torqueSpeed), 0, 100)
   };
 }
 
