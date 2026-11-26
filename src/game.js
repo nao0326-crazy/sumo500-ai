@@ -149,7 +149,19 @@ export class BattleSimulation {
     this.tacticId = ''; this.tacticStartedAt = 0; this.tacticLockUntil = 0; this.flankSide = this.rand() > 0.5 ? 1 : -1;
     this.usedTactics = new Set(); this.tacticHistory = []; this.tacticUsage = {}; this.input = { left: 0, right: 0 };
     this.width = 620; this.height = 620;
-this.torqueSpeed = torqueSpeed;
+// Normalize torqueSpeed: clamp 0-100, handle NaN/Infinity/null
+    // - 0 is a valid setting (torque-focused)
+    // - Infinity/NaN/null → default 50
+    // - Out-of-range values → clamped to 0-100
+    // - Numerical strings are converted; non-numerical → 50
+    if (torqueSpeed === null || torqueSpeed === undefined) {
+      this.torqueSpeed = 50;
+    } else if (Number.isFinite(torqueSpeed)) {
+      this.torqueSpeed = Math.max(0, Math.min(100, torqueSpeed));
+    } else {
+      // NaN, Infinity, non-numeric string, etc.
+      this.torqueSpeed = 50;
+    }
     const start = BattleSimulation.startPositions(setup, () => this.rand());
     this.player = robot(start.player.x, start.player.y, start.player.angle, '#ffb04a', '#fff2bf', 'YOU', sprites.player || null);
     this.ai = robot(start.ai.x, start.ai.y, start.ai.angle, '#52d6c5', '#d9fff7', 'KOMA', sprites.ai || null);

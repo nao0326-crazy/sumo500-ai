@@ -398,13 +398,19 @@ function renderSettings() {
     const key = input.dataset.setting;
     const value = input.type === 'checkbox' ? input.checked : input.tagName === 'SELECT' ? input.value : Number(input.value);
     settings = { ...settings, [key]: value };
-    // Preserve per-aircraft torqueSpeedBySetup when torqueSpeed is changed
-    if (key === 'torqueSpeed' && settings.torqueSpeedBySetup === undefined) {
-      settings.torqueSpeedBySetup = {};
-      const prev = window.__sumo?.previousSettings;
-      if (prev && prev.torqueSpeedBySetup) {
-        settings.torqueSpeedBySetup = { ...prev.torqueSpeedBySetup };
+    // Update per-aircraft torqueSpeedBySetup when torqueSpeed is changed
+    if (key === 'torqueSpeed') {
+      // Initialize torqueSpeedBySetup if needed, preserving existing values
+      if (settings.torqueSpeedBySetup === undefined) {
+        settings.torqueSpeedBySetup = {};
+        const prev = window.__sumo?.previousSettings;
+        if (prev && prev.torqueSpeedBySetup) {
+          settings.torqueSpeedBySetup = { ...prev.torqueSpeedBySetup };
+        }
       }
+      // Update the current startSetup's torqueSpeedByEntry
+      const currentSetup = settings.startSetup === 'random' ? 'random' : 'standard';
+      settings.torqueSpeedBySetup[currentSetup] = value;
     }
     if (!saveSettings(settings)) showToast('設定を保存できませんでした。', { tone: 'danger' });
     const out = document.querySelector(`[data-out="${key}"]`);

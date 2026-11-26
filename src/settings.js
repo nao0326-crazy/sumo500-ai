@@ -24,13 +24,22 @@ export function sanitizeSettings(raw = {}) {
   // Per-aircraft torqueSpeed: keyed by startSetup to allow different
   // torqueSpeed values for different battle configurations (e.g. player vs AI configs).
   const torqueSpeedBySetup = {};
-  for (const [setup, value] of Object.entries(source.torqueSpeedBySetup || {})) {
-    torqueSpeedBySetup[setup] = clamp(number(value, DEFAULT_SETTINGS.torqueSpeed), 0, 100);
+  // Collect existing torqueSpeedBySetup values, preserving 0 as valid value
+  if (source.torqueSpeedBySetup && typeof source.torqueSpeedBySetup === 'object') {
+    for (const [setup, value] of Object.entries(source.torqueSpeedBySetup)) {
+      torqueSpeedBySetup[setup] = clamp(number(value, DEFAULT_SETTINGS.torqueSpeed), 0, 100);
+    }
   }
   // Ensure the current startSetup has a torqueSpeed value
+  // Key-existence check (not truthy) so 0 is preserved as valid setting
   const currentSetup = source.startSetup === 'random' ? 'random' : 'standard';
-  if (!torqueSpeedBySetup[currentSetup]) {
-    torqueSpeedBySetup[currentSetup] = DEFAULT_SETTINGS.torqueSpeed;
+  if (!(currentSetup in torqueSpeedBySetup)) {
+    // Migration: if old format has torqueSpeed, use it; otherwise use default 50
+    if (source.torqueSpeed !== undefined && Number.isFinite(source.torqueSpeed)) {
+      torqueSpeedBySetup[currentSetup] = clamp(number(source.torqueSpeed, DEFAULT_SETTINGS.torqueSpeed), 0, 100);
+    } else {
+      torqueSpeedBySetup[currentSetup] = DEFAULT_SETTINGS.torqueSpeed;
+    }
   }
   return {
     stickSensitivity: clamp(number(source.stickSensitivity, DEFAULT_SETTINGS.stickSensitivity), 0.7, 1.4),
