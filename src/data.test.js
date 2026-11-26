@@ -141,7 +141,7 @@ test('checkpoints every 10 matches; rolling back restores tactic tuning but keep
 });
 
 test('settings are sanitised and stick shaping honours dead zone and sensitivity', () => {
-  assert.deepEqual(sanitizeSettings({ stickSensitivity: 9, deadzone: -1, vibration: 'yes', startSetup: 'weird' }), { stickSensitivity: 1.4, deadzone: 0, vibration: true, showAIInfo: true, startSetup: 'standard' });
+  assert.deepEqual(sanitizeSettings({ stickSensitivity: 9, deadzone: -1, vibration: 'yes', startSetup: 'weird' }), { stickSensitivity: 1.4, deadzone: 0, vibration: true, showAIInfo: true, startSetup: 'standard', torqueSpeed: 50, torqueSpeedBySetup: { standard: 50 } });
   const store = memoryStorage(); saveSettings({ deadzone: 0.1 }, store); assert.equal(loadSettings(store).deadzone, 0.1);
   const opts = { stickSensitivity: 1, deadzone: 0.1 };
   assert.equal(shapeStick(0.05, opts), 0); assert.equal(shapeStick(1, opts), 1); assert.equal(shapeStick(-1, opts), -1);

@@ -141,7 +141,7 @@ function steerLoad(unit, target, dt) { unit.loadFactor = ema(unit.loadFactor ?? 
 const NO_CONTACT = Object.freeze({ touching: false, force: 0, wedgePlayer: 0, wedgeAI: 0, normal: { x: 0, y: 0 }, point: null });
 
 export class BattleSimulation {
-  constructor(canvas, aiState, { onUpdate, onFinish, sprites = {}, random = null, setup = 'standard' } = {}) {
+  constructor(canvas, aiState, { onUpdate, onFinish, sprites = {}, random = null, setup = 'standard', torqueSpeed = 50 } = {}) {
     this.canvas = canvas; this.ctx = canvas?.getContext?.('2d') || null; this.aiState = aiState;
     this.onUpdate = onUpdate; this.onFinish = onFinish; this.running = false; this.ended = false; this.paused = false;
     this.random = random;
@@ -149,7 +149,7 @@ export class BattleSimulation {
     this.tacticId = ''; this.tacticStartedAt = 0; this.tacticLockUntil = 0; this.flankSide = this.rand() > 0.5 ? 1 : -1;
     this.usedTactics = new Set(); this.tacticHistory = []; this.tacticUsage = {}; this.input = { left: 0, right: 0 };
     this.width = 620; this.height = 620;
-this.torqueSpeed = typeof torqueSpeed !== 'undefined' ? torqueSpeed : 50;
+this.torqueSpeed = torqueSpeed;
     const start = BattleSimulation.startPositions(setup, () => this.rand());
     this.player = robot(start.player.x, start.player.y, start.player.angle, '#ffb04a', '#fff2bf', 'YOU', sprites.player || null);
     this.ai = robot(start.ai.x, start.ai.y, start.ai.angle, '#52d6c5', '#d9fff7', 'KOMA', sprites.ai || null);

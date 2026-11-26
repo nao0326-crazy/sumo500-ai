@@ -193,7 +193,8 @@ function renderBattle() {
   </section>`, 'battle');
   bindCommon();
   const canvas = document.querySelector('#arena-canvas');
-  battle = new BattleSimulation(canvas, ai, { onUpdate: updateBattleHUD, onFinish: handleFinish, sprites: { player: playerSprite, ai: aiSprite }, setup: settings.startSetup, torqueSpeed: settings.torqueSpeed });
+  const torqueSpeed = settings.torqueSpeedBySetup?.[settings.startSetup] ?? settings.torqueSpeed;
+  battle = new BattleSimulation(canvas, ai, { onUpdate: updateBattleHUD, onFinish: handleFinish, sprites: { player: playerSprite, ai: aiSprite }, setup: settings.startSetup, torqueSpeed });
   requestAnimationFrame(() => battle?.resize());
   bindStick(document.querySelector('[data-stick="left"]'), 'left');
   bindStick(document.querySelector('[data-stick="right"]'), 'right');
@@ -397,6 +398,14 @@ function renderSettings() {
     const key = input.dataset.setting;
     const value = input.type === 'checkbox' ? input.checked : input.tagName === 'SELECT' ? input.value : Number(input.value);
     settings = { ...settings, [key]: value };
+    // Preserve per-aircraft torqueSpeedBySetup when torqueSpeed is changed
+    if (key === 'torqueSpeed' && settings.torqueSpeedBySetup === undefined) {
+      settings.torqueSpeedBySetup = {};
+      const prev = window.__sumo?.previousSettings;
+      if (prev && prev.torqueSpeedBySetup) {
+        settings.torqueSpeedBySetup = { ...prev.torqueSpeedBySetup };
+      }
+    }
     if (!saveSettings(settings)) showToast('設定を保存できませんでした。', { tone: 'danger' });
     const out = document.querySelector(`[data-out="${key}"]`);
     if (out) out.textContent = key === 'deadzone' ? `${Math.round(value * 100)}%` : Number(value).toFixed(2);

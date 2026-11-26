@@ -11,8 +11,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   deadzone: 0.08,          // 0 – 0.2: ignored stick travel around the centre
   vibration: true,
   showAIInfo: true,
-  startSetup: 'standard'   // 'standard' (facing) | 'random' (mirrored random placement)
-  // torqueSpeed: 50 will be added by sanitizeSettings
+  startSetup: 'standard',   // 'standard' (facing) | 'random' (mirrored random placement)
+  torqueSpeed: 50          // 0=torque focus, 100=speed focus
 });
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -21,13 +21,25 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 export function sanitizeSettings(raw = {}) {
   const source = raw && typeof raw === 'object' ? raw : {};
   const number = (value, fallback) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+  // Per-aircraft torqueSpeed: keyed by startSetup to allow different
+  // torqueSpeed values for different battle configurations (e.g. player vs AI configs).
+  const torqueSpeedBySetup = {};
+  for (const [setup, value] of Object.entries(source.torqueSpeedBySetup || {})) {
+    torqueSpeedBySetup[setup] = clamp(number(value, DEFAULT_SETTINGS.torqueSpeed), 0, 100);
+  }
+  // Ensure the current startSetup has a torqueSpeed value
+  const currentSetup = source.startSetup === 'random' ? 'random' : 'standard';
+  if (!torqueSpeedBySetup[currentSetup]) {
+    torqueSpeedBySetup[currentSetup] = DEFAULT_SETTINGS.torqueSpeed;
+  }
   return {
     stickSensitivity: clamp(number(source.stickSensitivity, DEFAULT_SETTINGS.stickSensitivity), 0.7, 1.4),
     deadzone: clamp(number(source.deadzone, DEFAULT_SETTINGS.deadzone), 0, 0.2),
     vibration: typeof source.vibration === 'boolean' ? source.vibration : DEFAULT_SETTINGS.vibration,
     showAIInfo: typeof source.showAIInfo === 'boolean' ? source.showAIInfo : DEFAULT_SETTINGS.showAIInfo,
     startSetup: source.startSetup === 'random' ? 'random' : 'standard',
-    torqueSpeed: clamp(number(source.torqueSpeed, DEFAULT_SETTINGS.torqueSpeed), 0, 100)
+    torqueSpeed: clamp(number(source.torqueSpeed, DEFAULT_SETTINGS.torqueSpeed), 0, 100),
+    torqueSpeedBySetup: torqueSpeedBySetup
   };
 }
 
