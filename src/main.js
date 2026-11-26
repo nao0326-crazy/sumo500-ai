@@ -274,7 +274,20 @@ function handleFinish(outcome) {
     saved, at: new Date().toISOString()
   };
   storeResult(result);
-  setTimeout(() => { if (currentScreen === 'battle') navigate('result', { replace: true, skipGuard: true }); }, 700);
+  if (settings.consecutiveBattle) {
+    // Auto-start next battle - reset battle state and start immediately
+    if (battle) {
+      battle.stop();
+      battle = null;
+    }
+    // Clear result and navigate to battle
+    result = null;
+    // Need to re-initialize AI and settings for the new battle
+    // but keep the AI learning data - just reset battle-specific state
+    navigate('battle', { replace: true, skipGuard: true });
+  } else {
+    setTimeout(() => { if (currentScreen === 'battle') navigate('result', { replace: true, skipGuard: true }); }, 700);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -383,6 +396,7 @@ function renderSettings() {
     </div>
     <div class="settings-group"><h2>対戦</h2>
       <label class="setting-row toggle"><span><strong>AIの戦術・状況を表示</strong><small>対戦中にKOMAの判断を表示</small></span><input type="checkbox" ${settings.showAIInfo ? 'checked' : ''} data-setting="showAIInfo"></label>
+      <label class="setting-row toggle"><span><strong>連続対戦</strong><small>試合終了後に自動的に次の試合を開始</small></span><input type="checkbox" ${settings.consecutiveBattle ? 'checked' : ''} data-setting="consecutiveBattle"></label>
       <label class="setting-row"><span><strong>初期配置</strong><small>ランダムは左右対称に配置します</small></span><select data-setting="startSetup"><option value="standard" ${settings.startSetup === 'standard' ? 'selected' : ''}>正対（標準）</option><option value="random" ${settings.startSetup === 'random' ? 'selected' : ''}>ランダム</option></select></label>
     </div>
     <div class="settings-group"><h2>データ</h2>

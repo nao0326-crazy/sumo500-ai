@@ -12,7 +12,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   vibration: true,
   showAIInfo: true,
   startSetup: 'standard',   // 'standard' (facing) | 'random' (mirrored random placement)
-  torqueSpeed: 50          // 0=torque focus, 100=speed focus
+  torqueSpeed: 50,         // 0=torque focus, 100=speed focus
+  consecutiveBattle: true // auto-restart after match end
 });
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -46,6 +47,7 @@ export function sanitizeSettings(raw = {}) {
     deadzone: clamp(number(source.deadzone, DEFAULT_SETTINGS.deadzone), 0, 0.2),
     vibration: typeof source.vibration === 'boolean' ? source.vibration : DEFAULT_SETTINGS.vibration,
     showAIInfo: typeof source.showAIInfo === 'boolean' ? source.showAIInfo : DEFAULT_SETTINGS.showAIInfo,
+    consecutiveBattle: typeof source.consecutiveBattle !== 'undefined' ? source.consecutiveBattle : DEFAULT_SETTINGS.concurrentBattle,
     startSetup: source.startSetup === 'random' ? 'random' : 'standard',
     torqueSpeed: clamp(number(source.torqueSpeed, DEFAULT_SETTINGS.torqueSpeed), 0, 100),
     torqueSpeedBySetup: torqueSpeedBySetup
