@@ -6,13 +6,12 @@ const SETTINGS_KEY = 'sumo500-settings';
 const TORQUE_SPEED_PRESET_MAX_SPEED = [136, 149.6, 170, 190.4, 204];
 const TORQUE_SPEED_PRESET_DRIVE_ACCEL = [537.5, 488.6, 430, 383.9, 358.3];
 const TORQUE_SPEED_POINTS_S = [0, 25, 50, 75, 100];
-const TORQUE_SPEED_PRESETS = {
+// Torque-speed preset values: easy=30, normal=50, hard=70 (0-100 scale)
+export const TORQUE_SPEED_PRESETS = {
   easy: 30,      // AI弱め (プレイヤー有利)
   normal: 50,    // 既定 (AIとプレイヤー同等)
   hard: 70       // AI強め (プレイヤー不利)
 };
-
-// Torque-speed balance settings per machine (0=torque focus, 100=speed focus)
 export const DEFAULT_SETTINGS = Object.freeze({
   stickSensitivity: 1,     // 0.7 – 1.4: how far the knob must travel for full wheel speed
   deadzone: 0.08,          // 0 – 0.2: ignored stick travel around the centre
@@ -20,8 +19,14 @@ export const DEFAULT_SETTINGS = Object.freeze({
   showAIInfo: true,
   startSetup: 'standard',   // 'standard' (facing) | 'random' (mirrored random placement)
   torqueSpeed: 50,         // 0=torque focus, 100=speed focus
-  consecutiveBattle: true // auto-restart after match end
+  consecutiveBattle: true, // auto-restart after match end
   // aiOpponentTorquePreset は sanitizeSettings で追加される
+  aiOpponentTorquePreset: 'normal',
+  // Detailed mode: use RPM and gear ratio instead of torque speed slider
+  detailedMode: false,
+  // Player vehicle detailed settings
+  motorRpm: 10000,         // Motor RPM (revolutions per minute)
+  gearRatio: 5.0,          // Gear ratio (e.g., 5.0 = 5:1)
 });
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -33,6 +38,23 @@ export function sanitizeSettings(raw = {}) {
   
   // === プレイヤー機体の設定 (変更しない) ===
   const torqueSpeed = number(source.torqueSpeed, DEFAULT_SETTINGS.torqueSpeed);
+// detailedMode flag
+  const detailedMode = source.detailedMode === true;
+  // motorRpm と gearRatio から equivalentTorqueSpeed を計算
+  let equivalentTorqueSpeed = torqueSpeed; // Default: use normal torqueSpeed
+  if (detailedMode) {
+    const motorRpm = number(source.motorRpm, DEFAULT_SETTINGS.motorRpm);
+    const gearRatio = number(source.gearRatio, DEFAULT_SETTINGS.gearRatio);
+    // ギア比が大きいほどトルク重視、小さいほどスピード重視
+    // モーター回転数が高いほどスピード重視
+    // 5000-15000 rpm の範囲、gearRatio 3-10 の範囲で normal (50) を基準
+    const normalizedRpm = clamp(Math.round((motorRpm - 5000) / 100), 0, 100);
+    const normalizedGear = clamp(Math.round((10 - gearRatio) * 10), 0, 100);
+    // RPM とギア比のウェイト付き平均 (RPM 60%, ギア比 40%)
+    equivalentTorqueSpeed = Math.round(0.6 * normalizedRpm + 0.4 * normalizedGear);
+    equivalentTorqueSpeed = clamp(equivalentTorqueSpeed, 0, 100);
+  }
+  // === 相手機体の性能プリセット ===
   
   // === 相手機体の性能プリセット ===
   // 'easy' | 'normal' | 'hard' から設定。不明な値は 'normal' (50) に補正
@@ -78,7 +100,7 @@ export function sanitizeSettings(raw = {}) {
     startSetup: source.startSetup === 'random' ? 'random' : 'standard',
     torqueSpeed: clamp(number(source.torqueSpeed, DEFAULT_SETTINGS.torqueSpeed), 0, 100),
     // プレヤーと分離した相手機体のトルク設定
-    aiTorqueSpeed: aiTorqueSpeed,
+    aiTorqueSpeed: detailedMode ? equivalentTorqueSpeed : aiTorqueSpeed,
     // プリセット名（保存時の識別用）
     aiOpponentTorquePreset: aiOpponentTorquePreset,
     torqueSpeedBySetup: torqueSpeedBySetup

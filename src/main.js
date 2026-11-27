@@ -7,7 +7,7 @@ import {
   objectiveRate, parseImport, PLACEMENT_LABELS, recentForm, resetAI, restoreBackup, rollbackToCheckpoint, saveAI, successRate,
   summarizeAI, TACTICS, tacticById
 } from './data.js';
-import { loadSettings, saveSettings, shapeStick } from './settings.js';
+import { loadSettings, saveSettings, shapeStick, TORQUE_SPEED_PRESETS } from './settings.js';
 import { checkForUpdate, pwaState, registerServiceWorker, requestPersistentStorage, storageStatus } from './pwa.js';
 
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -194,12 +194,12 @@ function renderBattle() {
   bindCommon();
   const canvas = document.querySelector('#arena-canvas');
   // プレイヤーのトルク設定
-  const playerTorqueSpeed = settings.torqueSpeed;
+  const playerTorqueSpeed = settings.detailedMode ? settings.equivalentTorqueSpeed : settings.torqueSpeed;
   // 相手機体のトルク設定: プリセットか個別設定か
   const opponentPreset = settings.aiOpponentTorquePreset;
   let aiTorqueSpeed;
-  if (OPPONENT_TORQUE_PRESETS[opponentPreset] !== undefined) {
-    aiTorqueSpeed = OPPONENT_TORQUE_PRESETS[opponentPreset];
+  if (TORQUE_SPEED_PRESETS[opponentPreset] !== undefined) {
+    aiTorqueSpeed = TORQUE_SPEED_PRESETS[opponentPreset];
   } else if (typeof settings.aiTorqueSpeed !== 'undefined' && Number.isFinite(settings.aiTorqueSpeed)) {
     aiTorqueSpeed = clamp(number(settings.aiTorqueSpeed, DEFAULT_SETTINGS.torqueSpeed), 0, 100);
   } else {
@@ -403,10 +403,12 @@ function renderSettings() {
       <label class="setting-row"><span><strong>スティック感度</strong><small>大きいほど少ない移動で最大速度</small></span><input type="range" min="0.7" max="1.4" step="0.05" value="${settings.stickSensitivity}" data-setting="stickSensitivity"><output data-out="stickSensitivity">${settings.stickSensitivity.toFixed(2)}</output></label>
       <label class="setting-row"><span><strong>デッドゾーン</strong><small>中央付近の小さな動きを無視</small></span><input type="range" min="0" max="0.2" step="0.01" value="${settings.deadzone}" data-setting="deadzone"><output data-out="deadzone">${Math.round(settings.deadzone * 100)}%</output></label>
       <label class="setting-row toggle"><span><strong>振動</strong><small>開始・終了時に短く振動（対応端末のみ）</small></span><input type="checkbox" ${settings.vibration ? 'checked' : ''} data-setting="vibration"></label>
+      <label class="setting-row"><span><strong>詳細設定モード</strong><small>RPMとギア比で自機の性能を設定</small></span><input type="checkbox" ${settings.detailedMode ? 'checked' : ''} data-setting="detailedMode"></label>
 <label class=\"setting-row\"><span><strong>トルク \\u2192 スピード</strong><small>0：トルク重視・低速型、100：スピード重視・高回転型</small></span><br><input type=\"range\" min=\"0\" max=\"100\" step=\"1\" value=\"${settings.torqueSpeed}\" data-setting=\"torqueSpeed\"><output data-out=\"torqueSpeed\">${settings.torqueSpeed}</output><span style=\"float: left; width: 45%;\">トルク重視</span><span style=\"float: right; width: 45%;\">スピード重視</span></label>
     </div>
     <div class="settings-group"><h2>対戦</h2>
       <label class="setting-row toggle"><span><strong>AIの戦術・状況を表示</strong><small>対戦中にKOMAの判断を表示</small></span><input type="checkbox" ${settings.showAIInfo ? 'checked' : ''} data-setting="showAIInfo"></label>
+      <label class="setting-row"><span><strong>AIの強さ</strong><small>Easy/Normal/HardでAIの物理性能を変更</small></span><select data-setting="aiOpponentTorquePreset"><option value="easy" ${settings.aiOpponentTorquePreset === 'easy' ? 'selected' : ''}>Easy</option><option value="normal" ${settings.aiOpponentTorquePreset === 'normal' ? 'selected' : ''}>Normal</option><option value="hard" ${settings.aiOpponentTorquePreset === 'hard' ? 'selected' : ''}>Hard</option></select></label>
       <label class="setting-row toggle"><span><strong>連続対戦</strong><small>試合終了後に自動的に次の試合を開始</small></span><input type="checkbox" ${settings.consecutiveBattle ? 'checked' : ''} data-setting="consecutiveBattle"></label>
       <label class="setting-row"><span><strong>初期配置</strong><small>ランダムは左右対称に配置します</small></span><select data-setting="startSetup"><option value="standard" ${settings.startSetup === 'standard' ? 'selected' : ''}>正対（標準）</option><option value="random" ${settings.startSetup === 'random' ? 'selected' : ''}>ランダム</option></select></label>
     </div>

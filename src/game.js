@@ -38,6 +38,39 @@ const norm = (v) => { const length = Math.hypot(v.x, v.y) || 1; return { x: v.x 
 const angleDelta = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
 const smoothstep = (edge0, edge1, x) => { const t = clamp((x - edge0) / (edge1 - edge0), 0, 1); return t * t * (3 - 2 * t); };
 const ema = (current, target, dt, tau) => current + (target - current) * (1 - Math.exp(-dt / tau));
+// Performance correction based on AI vs player physical parameter superiority.
+// Adjusts tactic scores to favor tactics that leverage AI's performance advantages
+// while maintaining existing situational judgment.
+// Only applies corrections when there's a genuine 10%+ performance difference.
+function performanceCorrection(tacticId, aiDriveAccel, playerDriveAccel, aiMaxSpeed, playerMaxSpeed) {
+  let correction = 0;
+  const torqueSuperior = aiDriveAccel > playerDriveAccel * 1.1;
+  const speedSuperior = aiMaxSpeed > playerMaxSpeed * 1.1;
+  
+  // Case 1: AI has 10%+ acceleration advantage
+  if (torqueSuperior && tacticId === 'direct') correction += 1.5;
+  
+  // Case 2: AI has 10%+ speed advantage
+  if (speedSuperior) {
+    if (tacticId === 'flank') correction += 1.5;
+    if (tacticId === 'sidestep') correction += 1.5;
+  }
+  
+  // Case 3: AI is inferior in both (player has 10%+ advantage in at least one)
+  // This applies when AI is not superior in either metric AND player has advantage
+  const playerAccelAdvantage = playerDriveAccel > aiDriveAccel * 1.1;
+  const playerSpeedAdvantage = playerMaxSpeed > aiMaxSpeed * 1.1;
+  const playerSuperior = playerAccelAdvantage || playerSpeedAdvantage;
+  
+  if (playerSuperior) {
+    if (tacticId === 'direct') correction -= 2.0;
+    if (tacticId === 'counter') correction += 1.0;
+    if (tacticId === 'sidestep') correction += 1.0;
+    if (tacticId === 'escape') correction += 1.0;
+  }
+  
+  return correction;
+}
 const interpolateMotorParams = (torqueSpeed) => {
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   if (torqueSpeed <= TORQUE_SPEED_POINTS_S[0]) return { maxSpeed: TORQUE_SPEED_PRESET_MAX_SPEED[0], driveAccel: TORQUE_SPEED_PRESET_DRIVE_ACCEL[0] };
@@ -648,6 +681,20 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
     // A straight charge with the blade pointed at the AI: curving in only offers a
     // blade corner; waiting to deflect it (counter) or meeting it squarely is better.
     const straightCharge = !s.touching && s.closingSpeed > 60 && prediction.lateralMomentum < 32 && d < 230 && Math.abs(s.opponentBearing) < 0.5;
+    // --- 性能差評価の開始 ---
+    // AIの実際の物理性能を取得
+    const aiMotorParams = interpolateMotorParams(this.aiTorqueSpeed);
+    const aiMaxSpeed = aiMotorParams.maxSpeed;
+    const aiDriveAccel = aiMotorParams.driveAccel;
+    // プレイヤーの実際の物理性能を取得
+    const playerMotorParams = interpolateMotorParams(this.torqueSpeed);
+    const playerMaxSpeed = playerMotorParams.maxSpeed;
+    const playerDriveAccel = playerMotorParams.driveAccel;
+    // 性能差の判定（1.1倍以上の差がある場合を優位とみなす）
+    const torqueSuperior = aiDriveAccel > playerDriveAccel * 1.1;
+    const speedSuperior = aiMaxSpeed > playerMaxSpeed * 1.1;
+    const performanceInferior = !torqueSuperior && !speedSuperior;
+    // --- 性能差評価の終了 ---
     const chargeProbability = this.opening.opponentOpeningProbs?.charge ?? 0;
     const scores = TACTICS.map((def) => {
       const stat = this.aiState.tactics[def.id] || { priority: def.basePriority, params: def.defaultParams, matchups: {} };
@@ -720,6 +767,9 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
       const matchup = stat.matchups?.[style];
       if (matchup && matchup.uses > 0) score += 0.6 * ((matchup.wins || 0) - (matchup.losses || 0)) / (matchup.uses + 4);
       score -= clamp(this.tacticMemory[def.id] || 0, -0.8, 2.2);
+      const performanceBonus = performanceCorrection(
+        def.id, aiDriveAccel, playerDriveAccel, aiMaxSpeed, playerMaxSpeed);
+      score += performanceBonus;
       if (!isOpening && def.id === this.tacticId) {
         const currentExecutionTime = clamp(this.aiState.tactics[this.tacticId]?.params?.executionTime ?? 0.8, 0.45, 1.6);
         const elapsed = Math.max(0, this.time - this.tacticStartedAt);
@@ -1123,4 +1173,4 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
   }
 }
 
-export { ARENA_RADIUS, ROBOT_HALF_SIZE, ROBOT_RADIUS, FOOTPRINT, GRIP_ACCEL, DRIVE_ACCEL, MAX_SPEED, contactManifold, forwardOf, sideOf, toLocal };
+export { ARENA_RADIUS, ROBOT_HALF_SIZE, ROBOT_RADIUS, FOOTPRINT, GRIP_ACCEL, DRIVE_ACCEL, MAX_SPEED, contactManifold, forwardOf, sideOf, toLocal, performanceCorrection };
