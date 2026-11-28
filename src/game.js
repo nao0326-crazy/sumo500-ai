@@ -1,34 +1,35 @@
-import { TACTICS, tacticById, recordTacticSelection } from './data.js';
+﻿import { TACTICS, tacticById, recordTacticSelection } from './data.js';
 
 // ---------------------------------------------------------------------------
-// World units: 1 unit ≈ 1.75 mm (dohyo radius 220 ≈ 385 mm). The game world is
-// time-scaled, so tyre grip is expressed directly as μ·g in units/s² per unit mass.
-// Robot body is 100mm × 100mm square (exactly).
+// World units: 1 unit 竕・1.75 mm (dohyo radius 220 竕・385 mm). The game world is
+// time-scaled, so tyre grip is expressed directly as ﾎｼﾂｷg in units/sﾂｲ per unit mass.
+// Robot body is 100mm ﾃ・100mm square (exactly).
 // ---------------------------------------------------------------------------
 const ARENA_RADIUS = 220;
 const ROBOT_RADIUS = 32; // Exported for backward compatibility; actual shape is FOOTPRINT square
 // Exact: 100mm body / 2 = 50mm half-size / 1.75mm per unit = 28.571428... units
-// Using full precision to maintain exact 100mm × 100mm dimension.
+// Using full precision to maintain exact 100mm ﾃ・100mm dimension.
 // Rounded for readability: 28.57 (29 would give 101.5mm, deviating from spec).
 const ROBOT_HALF_SIZE = 28.57142857142857; // 50/1.75 exact; 28.57 is adequate approximation
 const MAX_SPEED = 142;
 const TURN_SPEED = 3.6;
 const DRIVE_ACCEL = 390;          // motor current limit (stall force per unit mass, both wheels)
-const MOTOR_GAIN = 4.5;           // slope of the DC-motor torque–speed line
+const MOTOR_GAIN = 4.5;           // slope of the DC-motor torque窶都peed line
 const WHEEL_HALF_TRACK = 15;      // wheel distance from the centre line
 const WHEEL_AXLE_X = 4;           // axle position along the body (local +x is forward)
-const BODY_INERTIA = 260;       // inertia for 100mm×100mm square robot (kg·mm² → units²)
+const BODY_INERTIA = 260;       // inertia for 100mmﾃ・00mm square robot (kgﾂｷmmﾂｲ 竊・unitsﾂｲ)
 // Torque-speed balance settings per machine (0=torque focus, 100=speed focus)
 const TORQUE_SPEED_PRESET_MAX_SPEED = [136, 149.6, 170, 190.4, 204];
 const TORQUE_SPEED_PRESET_DRIVE_ACCEL = [537.5, 488.6, 430, 383.9, 358.3];
 const TORQUE_SPEED_POINTS_S = [0, 25, 50, 75, 100];
 // ---------------------------------------------------------------------------
 const CONTACT_SLOP = 0.32;
-const GRIP_ACCEL = 470;           // μ·g at static load (μ = 1 → effective g = 470 units/s²)
+const GRIP_ACCEL = 470;           // ﾎｼﾂｷg at static load (ﾎｼ = 1 竊・effective g = 470 units/sﾂｲ)
 const LATERAL_STIFFNESS = 0.9;    // share of lateral slip a gripping tyre cancels each step
-const BLADE_LIFT = 0.55;          // effective tanθ of a blade wedge that gets under the opponent
+const BLADE_LIFT = 0.55;          // effective tanﾎｸ of a blade wedge that gets under the opponent
 const ROLLING_DRAG = 0.28;
 const YAW_DRAG = 1.15;
+const cgHeightFactor = 0.02;       // ratio of CG height to wheel track width; determines load transfer per acceleration
 const TAU = Math.PI * 2;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -38,53 +39,63 @@ const norm = (v) => { const length = Math.hypot(v.x, v.y) || 1; return { x: v.x 
 const angleDelta = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
 const smoothstep = (edge0, edge1, x) => { const t = clamp((x - edge0) / (edge1 - edge0), 0, 1); return t * t * (3 - 2 * t); };
 const ema = (current, target, dt, tau) => current + (target - current) * (1 - Math.exp(-dt / tau));
-// Performance correction based on AI vs player physical parameter superiority.
-// Adjusts tactic scores to favor tactics that leverage AI's performance advantages
-// while maintaining existing situational judgment.
-// Only applies corrections when there's a genuine 10%+ performance difference.
-function performanceCorrection(tacticId, aiDriveAccel, playerDriveAccel, aiMaxSpeed, playerMaxSpeed) {
-  let correction = 0;
-  const torqueSuperior = aiDriveAccel > playerDriveAccel * 1.1;
-  const speedSuperior = aiMaxSpeed > playerMaxSpeed * 1.1;
-  
-  // Case 1: AI has 10%+ acceleration advantage
-  if (torqueSuperior && tacticId === 'direct') correction += 1.5;
-  
-  // Case 2: AI has 10%+ speed advantage
-  if (speedSuperior) {
-    if (tacticId === 'flank') correction += 1.5;
-    if (tacticId === 'sidestep') correction += 1.5;
-  }
-  
-  // Case 3: AI is inferior in both (player has 10%+ advantage in at least one)
-  // This applies when AI is not superior in either metric AND player has advantage
-  const playerAccelAdvantage = playerDriveAccel > aiDriveAccel * 1.1;
-  const playerSpeedAdvantage = playerMaxSpeed > aiMaxSpeed * 1.1;
-  const playerSuperior = playerAccelAdvantage || playerSpeedAdvantage;
-  
-  if (playerSuperior) {
-    if (tacticId === 'direct') correction -= 2.0;
-    if (tacticId === 'counter') correction += 1.0;
-    if (tacticId === 'sidestep') correction += 1.0;
-    if (tacticId === 'escape') correction += 1.0;
-  }
-  
-  return correction;
-}
+
+// Physical structure parameters (mm)
+// Blade angle from ground: ~20 degrees
+// Drive wheel diameter: 37mm (radius 18.5mm)
+// Track width (left-right wheel spacing): ~45mm
+// Motor position: near rear (affects rotation center)
+// Center of gravity: longitudinal offset, lateral offset, and height above ground
+const BLADE_ANGLE_FROM_GROUND = 20; // degrees
+const WHEEL_RADIUS_MM = 18.5; // 37mm diameter
+const TRACK_WIDTH_MM = 45; // left-right wheel spacing
+const MOTOR_POSITION_FROM_REAR_MM = 30; // approximate
+const CG_POSITION_LONG_MM = 0; // longitudinal CG offset from center (positive = forward)
+const CG_POSITION_LATERAL_MM = 0; // lateral CG offset from center (positive = right)
+const CG_HEIGHT_MM = 25; // CG height above ground level
+
+// Convert mm to game units (1 unit 竕・1.75 mm)
+const MM_PER_UNIT = 1.75;
+const BLADE_ANGLE = BLADE_ANGLE_FROM_GROUND * Math.PI / 180; // radians
+const BLADE_PITCH_FACTOR = 0.02; // pitch radians per unit of normal impulse * wedge difference
+const BLADE_ROLL_FACTOR = 0.015; // roll radians per unit of normal impulse * wedge difference
+const WHEEL_RADIUS = WHEEL_RADIUS_MM / MM_PER_UNIT; // game units
+const TRACK_WIDTH = TRACK_WIDTH_MM / MM_PER_UNIT; // game units
+const MOTOR_POSITION_FROM_REAR = MOTOR_POSITION_FROM_REAR_MM / MM_PER_UNIT; // game units
+const CG_POSITION_LONG = CG_POSITION_LONG_MM / MM_PER_UNIT; // longitudinal CG offset from center (units)
+const CG_POSITION_LATERAL = CG_POSITION_LATERAL_MM / MM_PER_UNIT; // lateral CG offset from center (units)
+const CG_HEIGHT = CG_HEIGHT_MM / MM_PER_UNIT; // CG height above ground (units)
 const interpolateMotorParams = (torqueSpeed) => {
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-  if (torqueSpeed <= TORQUE_SPEED_POINTS_S[0]) return { maxSpeed: TORQUE_SPEED_PRESET_MAX_SPEED[0], driveAccel: TORQUE_SPEED_PRESET_DRIVE_ACCEL[0] };
+  // Inverted tradeoff: higher torqueSpeed = higher maxSpeed but LOWER driveAccel
+  // Lower torqueSpeed = lower maxSpeed but HIGHER driveAccel
+  // This creates: Speed focus = faster but weaker pusher, Torque focus = slower but stronger pusher
+  if (torqueSpeed <= TORQUE_SPEED_POINTS_S[0]) {
+    // Torque focus: lower maxSpeed, higher driveAccel (stronger pusher)
+    return { maxSpeed: TORQUE_SPEED_PRESET_MAX_SPEED[0], driveAccel: TORQUE_SPEED_PRESET_DRIVE_ACCEL[0] * 1.5 };
+  }
   if (torqueSpeed >= TORQUE_SPEED_POINTS_S[TORQUE_SPEED_POINTS_S.length - 1]) {
-    return { maxSpeed: TORQUE_SPEED_PRESET_MAX_SPEED[TORQUE_SPEED_PRESET_MAX_SPEED.length - 1], driveAccel: TORQUE_SPEED_PRESET_DRIVE_ACCEL[TORQUE_SPEED_PRESET_DRIVE_ACCEL.length - 1] };
+    // Speed focus: higher maxSpeed, lower driveAccel (weaker pusher)
+    return { maxSpeed: TORQUE_SPEED_PRESET_MAX_SPEED[TORQUE_SPEED_PRESET_MAX_SPEED.length - 1], driveAccel: TORQUE_SPEED_PRESET_DRIVE_ACCEL[TORQUE_SPEED_PRESET_DRIVE_ACCEL.length - 1] * 0.5 };
   }
   // Find the interval
   for (let i = 0; i < TORQUE_SPEED_POINTS_S.length - 1; i += 1) {
     if (torqueSpeed >= TORQUE_SPEED_POINTS_S[i] && torqueSpeed <= TORQUE_SPEED_POINTS_S[i + 1]) {
       const t = (torqueSpeed - TORQUE_SPEED_POINTS_S[i]) / (TORQUE_SPEED_POINTS_S[i + 1] - TORQUE_SPEED_POINTS_S[i]);
-      // Smoothstep for smooth interpolation
       const t2 = t * t * (3 - 2 * t);
+      // Interpolate maxSpeed normally (higher torqueSpeed = faster)
       const maxSpeed = TORQUE_SPEED_PRESET_MAX_SPEED[i] * (1 - t2) + TORQUE_SPEED_PRESET_MAX_SPEED[i + 1] * t2;
-      const driveAccel = TORQUE_SPEED_PRESET_DRIVE_ACCEL[i] * (1 - t2) + TORQUE_SPEED_PRESET_DRIVE_ACCEL[i + 1] * t2;
+      // Invert driveAccel: apply inverse interpolation for the tradeoff
+      // Use the original values but reverse the interpolation direction
+      const originalDriveAccel = TORQUE_SPEED_PRESET_DRIVE_ACCEL[i] * (1 - t2) + TORQUE_SPEED_PRESET_DRIVE_ACCEL[i + 1] * t2;
+      // Inverted: start high (torque focus) and go low (speed focus)
+      const invertedDriveAccel = TORQUE_SPEED_PRESET_DRIVE_ACCEL[i] * (1 - t2) + TORQUE_SPEED_PRESET_DRIVE_ACCEL[i + 1] * t2;
+      // Apply inverse factor: torque focus gets multiplier > 1, speed focus gets < 1
+      const torqueFocusMultiplier = 1.5;
+      const speedFocusMultiplier = 0.5;
+      const range = torqueFocusMultiplier - speedFocusMultiplier;
+      const normalizedT = t; // t=0 is torque focus, t=1 is speed focus
+      const driveAccel = (TORQUE_SPEED_PRESET_DRIVE_ACCEL[i] * torqueFocusMultiplier) * (1 - normalizedT) + (TORQUE_SPEED_PRESET_DRIVE_ACCEL[i + 1] * speedFocusMultiplier) * normalizedT;
       return { maxSpeed, driveAccel };
     }
   }
@@ -98,16 +109,39 @@ const toLocal = (unit, point) => { const f = forwardOf(unit); const s = sideOf(u
 
 // Convex footprint: the shallow forward shoulders and broad blade are part of the
 // collision shape, rather than an invisible circle around the robot's center.
-// Updated to 100mm × 100mm square: ~57 units wide/tall, half-size ~29 units.
+// Updated to 100mm ﾃ・100mm square: ~57 units wide/tall, half-size ~29 units.
 const FOOTPRINT = [
   { x: -ROBOT_HALF_SIZE, y: -ROBOT_HALF_SIZE }, { x: ROBOT_HALF_SIZE, y: -ROBOT_HALF_SIZE },
   { x: ROBOT_HALF_SIZE, y: ROBOT_HALF_SIZE }, { x: -ROBOT_HALF_SIZE, y: ROBOT_HALF_SIZE }
 ];
 
 function robot(x, y, angle, color, accent, name, sprite) {
+  // Left/right wheel states
+  const leftWheel = { radius: WHEEL_RADIUS, speed: 0, torque: 0, grounded: true, load: 1, slip: 0 };
+  const rightWheel = { radius: WHEEL_RADIUS, speed: 0, torque: 0, grounded: true, load: 1, slip: 0 };
+
   return { x, y, angle, color, accent, name, sprite, vx: 0, vy: 0, omega: 0,
-    left: 0, right: 0, drivePower: 1, mass: 1, inertia: BODY_INERTIA, loadFactor: 1, wheelSlip: 0, trail: [] };
-}
+    left: 0, right: 0, drivePower: 1, mass: 1, inertia: BODY_INERTIA, loadFactor: 1, wheelSlip: 0, trail: [],
+    // Left/right wheel references for physics
+    leftWheel, rightWheel,
+    // Body pitch and roll state
+    pitch: 0, // forward/backward tilt (radians)
+    pitchVelocity: 0, // pitch angular velocity (radians/s)
+    pitchAngularAcceleration: 0, // pitch angular acceleration (radians/sﾂｲ)
+    roll: 0, // left/right tilt (radians)
+    rollVelocity: 0, // roll angular velocity (radians/s)
+    rollAngularAcceleration: 0, // roll angular acceleration (radians/sﾂｲ)
+    // Center of mass and contact tracking
+    centerOfMass: { x: 0, y: 0 },
+    contactPoint: { x: 0, y: 0 },
+    // Ground contact tracking
+    grounded: true,
+    leftGrounded: true,
+    rightGrounded: true,
+    frontGrounded: true, // front blade / chassis contact with ground
+    // Drive torque distribution
+    leftDriveTorque: 0, rightDriveTorque: 0
+  };
 
 function worldFootprint(unit) {
   const f = forwardOf(unit); const s = sideOf(unit);
@@ -163,7 +197,13 @@ function applyImpulse(unit, impulse, point) {
 // touching AND it faces the opponent, 0 = the contact is on the side/back panels.
 function bladeEngagement(unit, point, towardOther) {
   const local = toLocal(unit, point);
-  const onBlade = smoothstep(12, 22, local.x);
+  // Check if contact point is on the blade using multiple sample points for robustness.
+  // Check center point and two offset points along the blade edge.
+  const onBladeCenter = smoothstep(12, 22, local.x);
+  const onBladeForward = smoothstep(12, 22, local.x + 0.5);
+  const onBladeAft = smoothstep(12, 22, local.x - 0.5);
+  // Use the maximum engagement among the three sample points for the strongest blade contact
+  const onBlade = Math.max(onBladeCenter, onBladeForward, onBladeAft);
   const facing = clamp((dot(forwardOf(unit), towardOther) - 0.25) / 0.5, 0, 1);
   return onBlade * facing;
 }
@@ -171,10 +211,28 @@ function bladeEngagement(unit, point, towardOther) {
 function relaxLoad(unit, dt) { unit.loadFactor = ema(unit.loadFactor ?? 1, 1, dt, 0.06); }
 function steerLoad(unit, target, dt) { unit.loadFactor = ema(unit.loadFactor ?? 1, clamp(target, 0.25, 1.75), dt, 0.04); }
 
-const NO_CONTACT = Object.freeze({ touching: false, force: 0, wedgePlayer: 0, wedgeAI: 0, normal: { x: 0, y: 0 }, point: null });
+// Contact state shared between the two robots during sustained pushing
+// Forces are applied each step via applyImpulse; current physical interaction, not accumulated
+const NO_CONTACT = Object.freeze({ touching: false, force: 0, wedgePlayer: 0, wedgeAI: 0, normal: { x: 0, y: 0 }, point: null, penDepth: 0 });
+
+// Friction coefficient for robot-to-robot contact (lower than tire grip, surfaces are smoother)
+// 70% of tire-ground ﾎｼ (GRIP_ACCEL 竕・470), allowing sliding during push while transmitting significant force
+const ROBOT_CONTACT_FRICTION = 0.7; // 70% of tire ﾎｼ to allow some sliding during push
+
+// Penetration correction coefficient: how much of the overlap to correct each step
+// Smaller values = slower correction, larger values = more aggressive but risk unstable separation
+const PENETRATION_CORRECTION_COEF = 0.2; // 20% of penetration per step
+
+// Solver effectormass: how much of the relative velocity to remove via impulse
+// A value in (0, 1) provides stable solving without energy gain or loss in steady state
+const SOLVER_MASS_COEF = 0.5; // 50% of effective mass
 
 export class BattleSimulation {
-  constructor(canvas, aiState, { onUpdate, onFinish, sprites = {}, random = null, setup = 'standard', torqueSpeed = 50, aiTorqueSpeed = 50 } = {}) {
+  // Recording system for deterministic replay
+  static RECORDING_VERSION = 2;
+  static DEFAULT_TIMESTEP = 1 / 120;
+
+  constructor(canvas, aiState, { onUpdate, onFinish, sprites = {}, random = null, setup = 'standard', torqueSpeed = 50 } = {}) {
     this.canvas = canvas; this.ctx = canvas?.getContext?.('2d') || null; this.aiState = aiState;
     this.onUpdate = onUpdate; this.onFinish = onFinish; this.running = false; this.ended = false; this.paused = false;
     this.random = random;
@@ -182,11 +240,18 @@ export class BattleSimulation {
     this.tacticId = ''; this.tacticStartedAt = 0; this.tacticLockUntil = 0; this.flankSide = this.rand() > 0.5 ? 1 : -1;
     this.usedTactics = new Set(); this.tacticHistory = []; this.tacticUsage = {}; this.input = { left: 0, right: 0 };
     this.width = 620; this.height = 620;
+
+    // Recording state
+    this.isRecording = false;
+    this.recordedFrames = [];
+    this.recordingStartTime = 0;
+    this.randomSeed = null;
+  }
 // Normalize torqueSpeed: clamp 0-100, handle NaN/Infinity/null
     // - 0 is a valid setting (torque-focused)
-    // - Infinity/NaN/null → default 50
-    // - Out-of-range values → clamped to 0-100
-    // - Numerical strings are converted; non-numerical → 50
+    // - Infinity/NaN/null 竊・default 50
+    // - Out-of-range values 竊・clamped to 0-100
+    // - Numerical strings are converted; non-numerical 竊・50
     if (torqueSpeed === null || torqueSpeed === undefined) {
       this.torqueSpeed = 50;
     } else if (Number.isFinite(torqueSpeed)) {
@@ -194,15 +259,6 @@ export class BattleSimulation {
     } else {
       // NaN, Infinity, non-numeric string, etc.
       this.torqueSpeed = 50;
-    }
-    // AI torqueSpeed: always use default, player-controllable setting is separate
-    if (aiTorqueSpeed === null || aiTorqueSpeed === undefined) {
-      this.aiTorqueSpeed = 50;
-    } else if (Number.isFinite(aiTorqueSpeed)) {
-      this.aiTorqueSpeed = Math.max(0, Math.min(100, aiTorqueSpeed));
-    } else {
-      // NaN, Infinity, non-numeric string, etc.
-      this.aiTorqueSpeed = 50;
     }
     const start = BattleSimulation.startPositions(setup, () => this.rand());
     this.player = robot(start.player.x, start.player.y, start.player.angle, '#ffb04a', '#fff2bf', 'YOU', sprites.player || null);
@@ -235,6 +291,135 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
     this.openingTrack ||= null; this.events ||= { sideHitSeconds: 0, sidePressureSeconds: 0, frontalLossSeconds: 0, pivotRecoveries: 0, sideEpisodes: 0 };
     this.tacticLatch ||= {};
     for (const unit of [this.player, this.ai]) { if (unit) { unit.loadFactor ??= 1; unit.wheelSlip ??= 0; } }
+  }
+
+  // Robot-to-robot collision solver.
+  // Computes normal and friction impulses each step from current relative velocity
+  // (no accumulation across steps) to avoid artificial energy or unstable acceleration.
+  // Equal and opposite impulses are applied to both robots via applyImpulse().
+  // Penetration correction nudges bodies apart by a fraction of the overlap.
+  // Contact state (this.contact) is maintained while robots are in contact and
+  // reset to NO_CONTACT when they separate.
+  resolveRobotCollision(dt = 1 / 60) {
+    this.ensureRuntime();
+    const a = this.player; const b = this.ai; const manifold = contactManifold(a, b);
+    if (!manifold) {
+      // Contact ended: reset contact state
+      this.contact = NO_CONTACT;
+      this.contactForce = 0;
+      this.wedgePlayer = 0;
+      this.wedgeAI = 0;
+      this.a = null; this.b = null;
+      if (a && a.contactPenetration !== undefined) a.contactPenetration = 0;
+      if (b && b.contactPenetration !== undefined) b.contactPenetration = 0;
+      return false;
+    }
+
+    // Contact is active: update shared contact state
+    this.contact = manifold;
+
+    // --- Bodies and geometry ---
+    const A = a; const B = b;
+    const point = manifold.point; // contact point in world coordinates
+    const normal = manifold.normal; // unit normal (points from B toward A, i.e. into A)
+    const overlap = manifold.overlap; // penetration depth
+
+    // --- Relative velocity at contact point ---
+    // v_A_at = v_A + omega_A ﾃ・r_A  (2D: v + omega * perp(r))
+    const rA = { x: point.x - A.x, y: point.y - A.y };
+    const rB = { x: point.x - B.x, y: point.y - B.y };
+    // In 2D, omega ﾃ・r = (-omega*ry, omega*rx)
+    const vA = { x: A.vx - A.omega * rA.y, y: A.vy + A.omega * rA.x };
+    const vB = { x: B.vx - B.omega * rB.y, y: B.vy + B.omega * rB.x };
+
+    // Relative velocity: vB - vA (positive means moving apart along normal)
+    const relNormalVelocity = (vB.x - vA.x) * normal.x + (vB.y - vA.y) * normal.y;
+    const tangent = { x: -normal.y, y: normal.x }; // 90ﾂｰ CCW from normal
+
+    const relTangentialVelocity = (vB.x - vA.x) * tangent.x + (vB.y - vA.y) * tangent.y;
+
+    // --- Normal impulse (push/contact force) ---
+    // Effective mass including rotational inertia for impulse along normal direction
+    const invMassA = 1 / A.mass; const invMassB = 1 / B.mass;
+    const invInertiaA = 1 / (A.inertia ?? BODY_INERTIA); const invInertiaB = 1 / (B.inertia ?? BODY_INERTIA);
+    // In 2D, cross(r, n) = r.x * n.y - r.y * n.x
+    const crossrAn = rA.x * normal.y - rA.y * normal.x;
+    const crossrBn = rB.x * normal.y - rB.y * normal.x;
+    const K = invMassA + invMassB + (crossrAn * crossrAn) * invInertiaA + (crossrBn * crossrBn) * invInertiaB;
+    const effectiveMass = K > 0 ? 1 / K : 0;
+    const normalImpulse = effectiveMass * (-relNormalVelocity);
+    // Only apply if robots are approaching each other along the normal
+    const impulseIfApproaching = relNormalVelocity < 0 ? normalImpulse : 0;
+
+    // --- Friction (tangential) impulse ---
+    // Coulomb friction: |J_t| <= ﾎｼ * |J_n|
+    // Use rotational effective mass for tangential direction too
+    const crossrAt = rA.x * tangent.y - rA.y * tangent.x;
+    const crossrBt = rB.x * tangent.y - rB.y * tangent.x;
+    const Kt = invMassA + invMassB + (crossrAt * crossrAt) * invInertiaA + (crossrBt * crossrBt) * invInertiaB;
+    const effectiveMassT = Kt > 0 ? 1 / Kt : 0;
+    const frictionLimit = ROBOT_CONTACT_FRICTION * Math.abs(impulseIfApproaching);
+    // Clamp tangential impulse by friction limit using effective tangential mass
+    const frictionImpulse = clamp(relTangentialVelocity * effectiveMassT, -frictionLimit, frictionLimit);
+
+    // --- Apply equal and opposite impulses ---
+    // Normal impulse vector
+    const normalImpulseVec = { x: normal.x * impulseIfApproaching, y: normal.y * impulseIfApproaching };
+    // Friction impulse vector
+    const frictionImpulseVec = { x: tangent.x * frictionImpulse, y: tangent.y * frictionImpulse };
+
+    // Total impulse on A: normal + friction; on B: exact opposite
+    const totalImpulseA = { x: normalImpulseVec.x + frictionImpulseVec.x, y: normalImpulseVec.y + frictionImpulseVec.y };
+    const totalImpulseB = { x: -normalImpulseVec.x - frictionImpulseVec.x, y: -normalImpulseVec.y - frictionImpulseVec.y };
+
+    // Apply impulses at the contact point (lever arm creates yaw torque)
+    applyImpulse(A, totalImpulseA, point);
+    applyImpulse(B, totalImpulseB, point);
+
+    // --- Penetration correction ---
+    // Correct penetration only beyond a small tolerance to avoid jitter.
+    // Distribute correction using effective mass (including rotational inertia)
+    // so both bodies move apart proportionally to their inertia.
+    const penetrationTolerance = 1e-3; // minimum overlap to trigger correction
+    if (overlap > penetrationTolerance) {
+      // Effective mass including rotational inertia for the correction direction
+      const invMassA = 1 / A.mass; const invMassB = 1 / B.mass;
+      const invInertiaA = 1 / (A.inertia ?? BODY_INERTIA); const invInertiaB = 1 / (B.inertia ?? BODY_INERTIA);
+      // In 2D, cross(r, n) = r.x * n.y - r.y * n.x
+      const crossrAn = rA.x * normal.y - rA.y * normal.x;
+      const crossrBn = rB.x * normal.y - rB.y * normal.x;
+      const K = invMassA + invMassB + (crossrAn * crossrAn) * invInertiaA + (crossrBn * crossrBn) * invInertiaB;
+      const effectiveMass = K > 0 ? 1 / K : 0;
+      const penetrationCorrection = overlap * PENETRATION_CORRECTION_COEF / effectiveMass;
+      // Nudge each body away from the contact along the normal
+      const correctionA = { x: normal.x * penetrationCorrection, y: normal.y * penetrationCorrection };
+      const correctionB = { x: -normal.x * penetrationCorrection, y: -normal.y * penetrationCorrection };
+      // Apply as additional tiny impulses at the contact point
+      applyImpulse(A, correctionA, point);
+      applyImpulse(B, correctionB, point);
+    }
+
+    // --- Update contact state for AI situation tracking ---
+    this.contactForce = Math.abs(impulseIfApproaching);
+    this.wedgePlayer = A.wedgeEngagement ? Math.abs(A.wedgeEngagement) : 0;
+    this.wedgeAI = B.wedgeEngagement ? Math.abs(B.wedgeEngagement) : 0;
+    // Store penetration depth on each robot unit for AI tracking
+    if (A.contactPenetration !== undefined) A.contactPenetration = overlap;
+    if (B.contactPenetration !== undefined) B.contactPenetration = overlap;
+
+    // Mark as touching with current force and geometry
+    this.contact.touching = true;
+    this.contact.force = this.contactForce;
+    this.contact.wedgePlayer = this.wedgePlayer;
+    this.contact.wedgeAI = this.wedgeAI;
+    this.contact.normal = { x: normal.x, y: normal.y };
+    this.contact.point = { x: point.x, y: point.y };
+    this.contact.penDepth = overlap;
+
+    // Store references for trackSituation/assessSituation
+    this.a = A; this.b = B;
+
+    return true;
   }
 
   loadSprite(source) {
@@ -307,11 +492,78 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
     this.frame = requestAnimationFrame((next) => this.loop(next));
   }
 
-  // Advances one fixed step without rendering (used by tests and headless evaluation).
+  // Threshold for considering a robot "at the edge" based on footprint margin
+const EDGE_MARGIN_THRESHOLD = 5; // units; margin below this = at the edge
+
+// Advances one fixed step without rendering (used by tests and headless evaluation).
   step(dt = 1 / 120) {
     if (this.ended) return;
     if (this.countdown > 0) { this.countdown -= dt; return; }
     this.time += dt; this.update(dt);
+    // Recording: capture frame data after each physics step
+    if (this.isRecording) {
+      this.recordedFrames.push(this._getFrameData());
+    }
+  }
+
+  // Start recording for deterministic replay.
+  // Begins capturing frame data from the next step.
+  startRecording() {
+    if (this.isRecording) return;
+    this.isRecording = true;
+    this.recordedFrames = [];
+    this.recordingStartTime = this.time;
+    // Capture random seed for reproducibility
+    this.randomSeed = this.random || Math.random;
+    // Seed the random number generator for deterministic playback
+    if (this.randomSeed !== Math.random) {
+      let state = this.randomSeed >>> 0;
+      this.random = () => { state = (1664525 * state + 1013904223) >>> 0; return state / 4294967296; };
+    }
+  }
+
+  // Stop recording and return the recorded frame data.
+  stopRecording() {
+    if (!this.isRecording) return null;
+    this.isRecording = false;
+    // Capture the last frame's data before stopping
+    this.recordedFrames.push(this._getFrameData());
+    const recorded = { ...this.recordedFrames };
+    this.recordedFrames = [];
+    this.randomSeed = null;
+    return recorded;
+  }
+
+  // Capture the current frame's essential data for replay.
+  _getFrameData() {
+    const aiControl = this.controlForTactic();
+    return {
+      frame: this.frame,
+      time: this.time,
+      playerLeft: this.input.left,
+      playerRight: this.input.right,
+      aiLeft: aiControl.left,
+      aiRight: aiControl.right,
+      player: {
+        x: this.player.x, y: this.player.y, angle: this.player.angle,
+        vx: this.player.vx, vy: this.player.vy, omega: this.player.omega
+      },
+      ai: {
+        x: this.ai.x, y: this.ai.y, angle: this.ai.angle,
+        vx: this.ai.vx, vy: this.ai.vy, omega: this.ai.omega
+      },
+      tacticId: this.tacticId,
+      contact: this.contact ? {
+        touching: this.contact.touching,
+        wedgePlayer: this.contact.wedgePlayer,
+        wedgeAI: this.contact.wedgeAI,
+        normal: this.contact.normal,
+        point: this.contact.point,
+        force: this.contact.force
+      } : null,
+      frontalLoss: this.frontalLoss,
+      sidePressure: this.lastSituation?.sidePressure || 0
+    };
   }
 
   snapshot() {
@@ -324,28 +576,99 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
   }
 
   situationLabel() {
-    const s = this.lastSituation; if (!s) return '様子見';
-    if (s.selfMargin < 30) return '土俵際';
-    if (s.sidePressure > 0.22) return '横から押されている';
-    if (s.rearPressure > 0.3) return '後ろから押されている';
-    if (s.frontalLoss > 10) return '正面で押し負け';
-    if (s.touching && s.aiOnOpponentFlank) return '相手の側面を押している';
-    if (s.touching && s.frontalContest) return '正面で押し合い';
-    if (s.touching) return '接触中';
-    return s.distance < 140 ? '接近' : '間合い';
+    const s = this.lastSituation; if (!s) return '讒伜ｭ占ｦ・;
+    if (s.selfMargin < 30) return '蝨滉ｿｵ髫・;
+    if (s.sidePressure > 0.22) return '讓ｪ縺九ｉ謚ｼ縺輔ｌ縺ｦ縺・ｋ';
+    if (s.rearPressure > 0.3) return '蠕後ｍ縺九ｉ謚ｼ縺輔ｌ縺ｦ縺・ｋ';
+    if (s.frontalLoss > 10) return '豁｣髱｢縺ｧ謚ｼ縺苓ｲ縺・;
+    if (s.touching && s.aiOnOpponentFlank) return '逶ｸ謇九・蛛ｴ髱｢繧呈款縺励※縺・ｋ';
+    if (s.touching && s.frontalContest) return '豁｣髱｢縺ｧ謚ｼ縺怜粋縺・;
+    if (s.touching) return '謗･隗ｦ荳ｭ';
+    return s.distance < 140 ? '謗･霑・ : '髢灘粋縺・;
   }
 
   update(dt) {
-    this.ensureRuntime();
-    this.aiDecisionTimer -= dt;
-    if (this.aiDecisionTimer <= 0) { this.selectTactic(false); this.aiDecisionTimer = 0.34 + this.rand() * 0.18; }
-    const aiControl = this.controlForTactic();
-    this.player.left = this.input.left; this.player.right = this.input.right;
-    this.ai.left = aiControl.left; this.ai.right = aiControl.right;
-    this.applyDrive(this.player, dt); this.applyDrive(this.ai, dt);
-    const touching = this.resolveRobotCollision(dt);
-    this.trackSituation(dt);
-    if (this.tacticId) {
+    // Determine if robots are at/out of the dohyo boundary using footprint detection.
+// Uses the existing footprintMargin() which already transforms the robot's square
+// footprint into world coordinates and checks against ARENA_RADIUS.
+const playerMargin = this.footprintMargin(this.player);
+const aiMargin = this.footprintMargin(this.ai);
+const playerAtEdge = playerMargin < EDGE_MARGIN_THRESHOLD;
+const aiAtEdge = aiMargin < EDGE_MARGIN_THRESHOLD;
+
+// Update grounded states based on boundary proximity.
+// Wheels/blade outside the arena must not receive normal ground support.
+// Compute per-support-region grounded status independently.
+{
+  const playerFootprint = worldFootprint(this.player);
+  const aiFootprint = worldFootprint(this.ai);
+  // Player grounded states: check each footprint point against arena radius
+  const playerPointsOutside = playerFootprint.filter((p) => Math.hypot(p.x, p.y) > ARENA_RADIUS);
+  const aiPointsOutside = aiFootprint.filter((p) => Math.hypot(p.x, p.y) > ARENA_RADIUS);
+  
+  // A support point is grounded only if it's inside the arena AND has sufficient load.
+  // For simplicity: if any footprint point is outside, that region loses ground contact.
+  // This is a per-region simplification; the actual model uses left/right/front checks.
+  this.playerLeftOutside = playerPointsOutside.some((p) => Math.abs(p.x) > Math.abs(p.y) || p.x > 0);
+  this.playerRightOutside = playerPointsOutside.some((p) => Math.abs(p.x) > Math.abs(p.y) || p.x < 0);
+  this.playerFrontOutside = playerPointsOutside.some((p) => Math.abs(p.y) > Math.abs(p.x) && p.y > 0);
+  this.playerRearOutside = playerPointsOutside.some((p) => Math.abs(p.y) > Math.abs(p.x) && p.y < 0);
+  
+  const aiFootprintOutside = aiPointsOutside.some((p) => Math.hypot(p.x, p.y) > ARENA_RADIUS);
+  const aiPointsOut = aiFootprint.filter((p) => Math.hypot(p.x, p.y) > ARENA_RADIUS);
+  this.aiLeftOutside = aiPointsOut.some((p) => Math.abs(p.x) > Math.abs(p.y) || p.x > 0);
+  this.aiRightOutside = aiPointsOut.some((p) => Math.abs(p.x) > Math.abs(p.y) || p.x < 0);
+  this.aiFrontOutside = aiPointsOut.some((p) => Math.abs(p.y) > Math.abs(p.x) && p.y > 0);
+  this.aiRearOutside = aiPointsOut.some((p) => Math.abs(p.y) > Math.abs(p.x) && p.y < 0);
+}
+
+// Update chassis support: wheels/blade outside arena lose ground contact.
+// Use the existing leftGrounded/rightGrounded/frontGrounded but override when outside.
+{
+  // Player: if a wheel/blade region is outside the arena, force that region ungrounded.
+  // The existing model checks leftGrounded/rightGrounded/frontGrounded in applyDrive.
+  if (this.playerLeftOutside) this.player.leftGrounded = false;
+  else if (this.player.leftGrounded === false && !this.playerLeftOutside) this.player.leftGrounded = true; // restore if back inside
+  if (this.playerRightOutside) this.player.rightGrounded = false;
+  else if (this.player.rightGrounded === false && !this.playerRightOutside) this.player.rightGrounded = true;
+  if (this.playerFrontOutside) this.player.frontGrounded = false;
+  else if (this.player.frontGrounded === false && !this.playerFrontOutside) this.player.frontGrounded = true;
+  
+  // AI: same logic.
+  if (this.aiLeftOutside) this.ai.leftGrounded = false;
+  else if (this.ai.leftGrounded === false && !this.aiLeftOutside) this.ai.leftGrounded = true;
+  if (this.aiRightOutside) this.ai.rightGrounded = false;
+  else if (this.ai.rightGrounded === false && !this.aiRightOutside) this.ai.rightGrounded = true;
+  if (this.aiFrontOutside) this.ai.frontGrounded = false;
+  else if (this.ai.frontGrounded === false && !this.aiFrontOutside) this.ai.frontGrounded = true;
+}
+
+// Determine if robots are at/out of the dohyo boundary using footprint detection.
+const playerMargin = this.footprintMargin(this.player);
+const aiMargin = this.footprintMargin(this.ai);
+const playerAtEdge = playerMargin < EDGE_MARGIN_THRESHOLD;
+const aiAtEdge = aiMargin < EDGE_MARGIN_THRESHOLD;
+
+// Determine if robots have lost enough support to fall.
+// A robot is considered "fallen" if it has lost too many support points.
+// Use the existing footprintMargin to check this.
+const playerFallen = playerMargin < -5;  // margin negative = significantly over the edge
+const aiFallen = aiMargin < -5;
+
+// If a robot is fallen, disable driving.
+// If only at the edge, driving is still possible but with reduced support.
+if (playerFallen) {
+  this.player.left = 0; this.player.right = 0;
+}
+if (aiFallen) {
+  this.ai.left = 0; this.ai.right = 0;
+}
+
+// Determine if robots are at/out of the dohyo boundary using footprint detection.
+const playerMargin = this.footprintMargin(this.player);
+const aiMargin = this.footprintMargin(this.ai);
+const playerAtEdge = playerMargin < EDGE_MARGIN_THRESHOLD;
+const aiAtEdge = aiMargin < EDGE_MARGIN_THRESHOLD;
       this.tacticUsage ||= {};
       const usage = this.tacticUsage[this.tacticId] || this.createTacticUsage();
       usage.selectedSeconds += dt;
@@ -369,11 +692,11 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
     const playerOut = this.isOut(this.player); const aiOut = this.isOut(this.ai);
     if (playerOut || aiOut) {
       const winner = playerOut && aiOut ? 'draw' : playerOut ? 'ai' : 'player';
-      this.finish(winner, winner === 'draw' ? '両機体が場外' : '土俵外へ押し出し', { aiOut, playerOut });
+      this.finish(winner, winner === 'draw' ? '荳｡讖滉ｽ薙′蝣ｴ螟・ : '蝨滉ｿｵ螟悶∈謚ｼ縺怜・縺・, { aiOut, playerOut });
     } else if (this.time > 58) {
       const playerCenter = Math.hypot(this.player.x, this.player.y); const aiCenter = Math.hypot(this.ai.x, this.ai.y);
       const winner = Math.abs(playerCenter - aiCenter) < 8 ? 'draw' : playerCenter < aiCenter ? 'player' : 'ai';
-      this.finish(winner, '時間切れ・中心距離判定');
+      this.finish(winner, '譎る俣蛻・ｌ繝ｻ荳ｭ蠢・ｷ晞屬蛻､螳・);
     }
   }
 
@@ -403,7 +726,7 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
     // Losing a shove = being driven backward, or being moved toward the rim while
     // the blades are locked and the AI is pushing.
     const outward = this.radialOutwardSpeed(ai);
-    // Moving toward the rim only counts when the AI is not advancing — when it drives
+    // Moving toward the rim only counts when the AI is not advancing 窶・when it drives
     // the opponent out, it naturally travels outward too.
     const lossSignal = Math.max(0, -vLong, vLong < 4 ? outward * 0.8 : 0);
     this.frontalLoss = ema(this.frontalLoss, frontal && pushingForward ? lossSignal : 0, dt, frontal ? 0.18 : 0.4);
@@ -458,6 +781,23 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
     const opponentBearing = angleDelta(Math.atan2(-toPlayer.y, -toPlayer.x) - player.angle);
     const velocity = { x: ai.vx, y: ai.vy };
     const relativeVelocity = { x: player.vx - ai.vx, y: player.vy - ai.vy };
+
+    // Physics-aware situational fields
+    const selfMargin = this.footprintMargin(ai);
+    const opponentMargin = this.footprintMargin(player);
+    const atEdge = this.aiAtEdge; // from update()
+    const fallen = this.aiFallen; // from update()
+    // Traction state per wheel
+    const leftTraction = ai.leftGrounded ? ' grounded' : ' airborne';
+    const rightTraction = ai.rightGrounded ? ' grounded' : ' airborne';
+    const frontTraction = ai.frontGrounded ? ' grounded' : ' airborne';
+    // Contact state
+    const hasContact = c.touching;
+    const contactForce = c ? c.force : 0;
+    const wedgeAdvantage = c ? Math.max(c.wedgePlayer, c.wedgeAI) : 0;
+    // Boundary proximity for the AI
+    const aiAtEdgeInfo = aiAtEdge ? ' atEdge' : '';
+    const fallenInfo = fallen ? ' fallen' : '';
     const contactLocal = c.touching && c.point ? toLocal(ai, c.point) : null;
     const selfMargin = this.footprintMargin(ai); const opponentMargin = this.footprintMargin(player);
     const prediction = this.opponentPrediction();
@@ -507,17 +847,17 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
   }
 
   // Differential drive with a tyre model:
-  // - each wheel's DC motor follows its torque–speed line, limited by current;
-  // - each tyre can transmit at most μ·N (N from the static weight plus any blade
+  // - each wheel's DC motor follows its torque窶都peed line, limited by current;
+  // - each tyre can transmit at most ﾎｼﾂｷN (N from the static weight plus any blade
   //   load transfer), shared between driving and side grip (friction circle);
   // - side grip behaves as static friction until it saturates, then the chassis slides;
-  // - wheel forces at ±half-track create the yaw torque.
+  // - wheel forces at ﾂｱhalf-track create the yaw torque.
   // Right wheel faster than left => the robot turns LEFT (counter-clockwise on screen).
   applyDrive(unit, dt) {
     const forward = forwardOf(unit); const side = sideOf(unit);
     const mass = unit.mass ?? 1; const inertia = unit.inertia ?? BODY_INERTIA;
     const velocity = { x: unit.vx, y: unit.vy };
-    const motorParams = interpolateMotorParams(unit === this.ai ? this.aiTorqueSpeed : this.torqueSpeed);
+const motorParams = interpolateMotorParams(this.torqueSpeed);
     const MAX_SPEED = motorParams.maxSpeed;
     const DRIVE_ACCEL = motorParams.driveAccel;
     const longitudinalSpeed = dot(velocity, forward);
@@ -526,27 +866,266 @@ const yawPlayer = (rand() - 0.5) * 1.6; const yawAI = (rand() - 0.5) * 1.6;
     const leftSpeed = longitudinalSpeed + unit.omega * WHEEL_HALF_TRACK;
     const rightSpeed = longitudinalSpeed - unit.omega * WHEEL_HALF_TRACK;
 const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
-    const gripPerWheel = GRIP_ACCEL * mass * load / 2;
-    const motorLimit = DRIVE_ACCEL * (unit.drivePower ?? 1) * mass / 2;
-    const motor = (command, wheelSpeed) => clamp((clamp(command ?? 0, -1, 1) * MAX_SPEED - wheelSpeed) * MOTOR_GAIN * mass / 2, -motorLimit, motorLimit);
-    const leftMotor = motor(unit.left, leftSpeed); const rightMotor = motor(unit.right, rightSpeed);
-    const leftForce = clamp(leftMotor, -gripPerWheel, gripPerWheel);
-    const rightForce = clamp(rightMotor, -gripPerWheel, gripPerWheel);
-    unit.wheelSlip = Math.max(Math.abs(leftMotor) - gripPerWheel, Math.abs(rightMotor) - gripPerWheel, 0);
+// Calculate ground contact and load for each wheel
+// Simple 2.5D model: ground is arena plane, wheel load based on mass distribution and pitch/roll
 
-    // Side grip at the axle: cancel the lateral slip (static friction) within the
-    // grip left over by the driving force on each tyre.
-    const axleLateral = lateralSpeed + unit.omega * WHEEL_AXLE_X;
-    const effectiveMass = 1 / (1 / mass + (WHEEL_AXLE_X * WHEEL_AXLE_X) / inertia);
-    const lateralAvailable = Math.sqrt(Math.max(0, gripPerWheel ** 2 - leftForce ** 2)) + Math.sqrt(Math.max(0, gripPerWheel ** 2 - rightForce ** 2));
-    const lateralForce = clamp(-axleLateral * effectiveMass * LATERAL_STIFFNESS / dt, -lateralAvailable, lateralAvailable);
-    unit.lateralSaturation = lateralAvailable > 0 ? Math.abs(lateralForce) / lateralAvailable : 1;
+// Convert CG parameters to game units for physics calculations
+const cgLong = CG_POSITION_LONG; // longitudinal CG offset from center (units)
+const cgLat = CG_POSITION_LATERAL; // lateral CG offset from center (units)
+const cgH = CG_HEIGHT; // CG height above ground (units)
 
-    const drive = leftForce + rightForce;
-    unit.vx += (forward.x * drive + side.x * lateralForce) / mass * dt;
-    unit.vy += (forward.y * drive + side.y * lateralForce) / mass * dt;
-    const torque = WHEEL_HALF_TRACK * (leftForce - rightForce) + WHEEL_AXLE_X * lateralForce;
-    unit.omega += torque / inertia * dt;
+// Total mass
+const mass = unit.mass ?? 1;
+
+// ------- Pitch-based load transfer (front/rear) -------
+// The pitch angle directly contributes to weight transfer.
+// Additionally, longitudinal acceleration (from motor force) causes load transfer.
+// The lever arm for pitch-induced transfer is CG height: higher CG = more transfer.
+// Transfer = pitch * mass * (CG_height / (track/2 + CG_height)) approximately.
+// Using simpler model: pitch contributes directly, acceleration adds component.
+
+// Base static load split (can be biased by CG position)
+const staticLeftBias = 0.5 + cgLat / TRACK_WIDTH; // CG lateral bias: +right if cgLat > 0
+const staticRightBias = 1 - staticLeftBias;
+const baseLoad = mass / 2;
+
+// Pitch load transfer: pitch angle creates front/rear load shift
+// Lever arm is CG height 窶・higher CG = more transfer for same pitch angle
+const pitchLoadEffect = unit.pitch * mass * (cgH / (TRACK_WIDTH / 2 + cgH + 1e-3));
+const frontLoad = baseLoad + pitchLoadEffect;
+const rearLoad = baseLoad - pitchLoadEffect;
+
+// Determine which wheels are front/rear based on forward velocity direction
+// Since wheels are at left/right, we use the sign of forward longitudinal velocity
+const forwardVel = dot(velocity, forward) > 0; // positive means moving forward
+
+let leftBaseLoad, rightBaseLoad;
+if (forwardVel) {
+  // Robot moving forward: front wheels (in terms of direction of motion) get more load
+  leftBaseLoad = frontLoad; 
+  rightBaseLoad = rearLoad;
+} else {
+  // Robot moving reverse or stationary: rear wheels get more load
+  leftBaseLoad = rearLoad;
+  rightBaseLoad = frontLoad;
+}
+
+// ------- Roll-based load transfer (left/right) -------
+// Roll angle creates left/right load shift.
+// Additionally, lateral acceleration (from cornering/yaw) causes load transfer.
+// The lever arm for roll-induced transfer is CG lateral position + CG height effect.
+// Lateral acceleration from yaw motion: a_lat = omega^2 * distance_from_center_or_yaw_rate
+
+// Compute effective roll from both roll angle AND lateral acceleration from yaw
+// The lateral velocity at the wheel contacts includes yaw contribution
+const axleLateral = dot(velocity, side) + unit.omega * WHEEL_AXLE_X;
+const effectiveMass = 1 / (1 / mass + (WHEEL_AXLE_X * WHEEL_AXLE_X) / (unit.inertia ?? BODY_INERTIA));
+
+// Lateral acceleration component: from the effective lateral force divided by mass
+// This creates load transfer proportional to acceleration * CG height / track_width
+const latAccel = axleLateral * LATERAL_STIFFNESS / (mass * dt + 1e-3); // approximate lateral accel
+const rollLoadEffect = unit.roll * mass * (cgH / (TRACK_WIDTH / 2 + cgH + 1e-3)) + latAccel * cgH / (TRACK_WIDTH / 2 + 1e-3);
+
+// Apply roll-based load: left/right split
+// Positive roll tilts robot left 竊・left wheels unload, right wheels load (or vice depending on convention)
+// Convention: roll > 0 means top of robot tilts toward positive side (right = positive side)
+// Since sideOf() gives robot's RIGHT side, positive roll should lift left wheel
+const rollTransfer = rollLoadEffect;
+
+const actualLeftLoad = clamp(staticLeftBias * baseLoad + rollTransfer, 0.1, 5.0);
+const actualRightLoad = clamp(staticRightBias * baseLoad - rollTransfer, 0.1, 5.0);
+
+// Friction coefficient and maximum friction force
+const mu = GRIP_ACCEL; // friction coefficient (scaled for game units)
+const maxFrictionLeft = mu * actualLeftLoad;
+const maxFrictionRight = mu * actualRightLoad;
+
+// Motor force calculation for each wheel
+const motorParams = interpolateMotorParams(this.torqueSpeed);
+const MAX_SPEED = motorParams.maxSpeed;
+const DRIVE_ACCEL = motorParams.driveAccel;
+
+const leftInputClamped = clamp(unit.left, -1, 1);
+const rightInputClamped = clamp(unit.right, -1, 1);
+
+// Motor force for each wheel (before friction limiting)
+// Use actual wheel surface speed (longitudinal ﾂｱ yaw component) instead of input * radius
+const leftMotorForce = ((clamp(leftInputClamped, -1, 1) * MAX_SPEED - leftSpeed) * MOTOR_GAIN * unit.mass / 2);
+const rightMotorForce = ((clamp(rightInputClamped, -1, 1) * MAX_SPEED - rightSpeed) * MOTOR_GAIN * unit.mass / 2);
+
+// Clamp motor forces by maximum friction, then by stall limit with drivePower scaling
+// This ensures the motor cannot generate ground force beyond its rated capacity
+const _clampByStall = (force, maxLimit, inputPower) => clamp(force, -maxLimit, maxLimit);
+const motorLimit = DRIVE_ACCEL * (unit.drivePower ?? 1) * mass / 2;
+const leftMotorForceClamped = _clampByStall(clamp(leftMotorForce, -maxFrictionLeft, maxFrictionLeft), motorLimit, unit.left);
+const rightMotorForceClamped = _clampByStall(clamp(rightMotorForce, -maxFrictionRight, maxFrictionRight), motorLimit, unit.right);
+
+// Update wheel states and front blade grounded status
+// Front blade grounded: check if the front of the chassis/blade is below ground threshold
+// and if there's sufficient front load (affected by pitch angle)
+const robotHalf = ROBOT_HALF_SIZE; // ~28.57 units (100mm / 1.75)
+const forward = forwardOf(unit);
+const frontWorldX = unit.x + forward.x * robotHalf;
+const frontWorldY = unit.y + forward.y * robotHalf;
+const groundThreshold = unit.y - WHEEL_RADIUS; // ground is at wheel bottom height
+const frontBelowGround = frontWorldY <= groundThreshold;
+// Estimate front load: base load + pitch-induced front transfer
+// When pitch > 0 (nose up), front gets more load; pitch < 0 (nose down), front gets less
+const pitchFrontLoadBias = unit.pitch * (unit.mass ?? 1) * 0.5; // simple pitch load effect
+const frontEstimatedLoad = clamp(0.5 * (unit.mass ?? 1) + pitchFrontLoadBias, 0.1, 5.0);
+const minLoadForGround = 0.05;
+const frontGrounded = frontBelowGround && frontEstimatedLoad >= minLoadForGround;
+
+unit.leftWheel.speed = unit.left * MAX_SPEED;
+unit.rightWheel.speed = unit.right * MAX_SPEED;
+unit.leftWheel.torque = leftMotorForce;
+unit.rightWheel.torque = rightMotorForce;
+unit.leftWheel.grounded = unit.leftGrounded;
+unit.rightWheel.grounded = unit.rightGrounded;
+// Front blade grounded: used for pitch dynamics and support distribution
+unit.frontGrounded = frontGrounded;
+unit.leftWheel.load = actualLeftLoad;
+unit.rightWheel.load = actualRightLoad;
+
+// Slip detection
+unit.leftWheel.slip = Math.abs(leftMotorForce) > maxFrictionLeft ? 1 : 0;
+unit.rightWheel.slip = Math.abs(rightMotorForce) > maxFrictionRight ? 1 : 0;
+
+// Per-wheel: lateral force after enforcing the friction circle (longitudinal + lateral must satisfy ﾎｼﾂｲNﾂｲ 竕･ F_longﾂｲ + F_latﾂｲ)
+// Available lateral grip after accounting for longitudinal force on each wheel
+const lateralAvailableLeft = Math.sqrt(Math.max(0, maxFrictionLeft ** 2 - leftMotorForceClamped ** 2));
+const lateralAvailableRight = Math.sqrt(Math.max(0, maxFrictionRight ** 2 - rightMotorForceClamped ** 2);
+
+// Lateral velocity at each contact point, including chassis yaw velocity
+const axleLateral = dot(velocity, side) + unit.omega * WHEEL_AXLE_X;
+const effectiveMass = 1 / (1 / mass + (WHEEL_AXLE_X * WHEEL_AXLE_X) / inertia);
+
+// Per-wheel lateral force, clamped to the per-wheel available friction circle grip
+const lateralForceLeft = clamp(-axleLateral * effectiveMass * LATERAL_STIFFNESS / dt, -lateralAvailableLeft, lateralAvailableLeft);
+const lateralForceRight = clamp(-axleLateral * effectiveMass * LATERAL_STIFFNESS / dt, -lateralAvailableRight, lateralAvailableRight);
+
+// Effective lateral force considering grounded state
+const effectiveLeftLat = unit.leftGrounded ? lateralForceLeft : 0;
+const effectiveRightLat = unit.rightGrounded ? lateralForceRight : 0;
+
+// Total lateral force on chassis: vector sum of per-wheel forces in global frame
+const totalLateral = effectiveLeftLat + effectiveRightLat;
+
+// Wheel slip indicators reflect traction saturation (continuous 0 to 1)
+unit.leftWheel.slip = unit.leftGrounded ? Math.abs(leftMotorForceClamped) / maxFrictionLeft : 0;
+unit.rightWheel.slip = unit.rightGrounded ? Math.abs(rightMotorForceClamped) / maxFrictionRight : 0;
+
+// Total drive force (longitudinal)
+const drive = leftMotorForceClamped + rightMotorForceClamped;
+
+// Apply forces using per-wheel lateral forces
+unit.vx += (forward.x * drive + side.x * totalLateral) / mass * dt;
+unit.vy += (forward.y * drive + side.y * totalLateral) / mass * dt;
+
+// Pitch: forward/backward tilt from longitudinal acceleration
+// Use angular acceleration model: alpha = torque / inertia
+// Lever arm = contact point x position (forward/rear from center)
+// Use unit.contactPoint.x if available, otherwise use a default wheelbase lever arm
+const pitchLeverArm = unit.contactPoint?.x ?? WHEEL_HALF_TRACK; // front/rear position from center
+const pitchInertia = unit.inertia ?? BODY_INERTIA;
+const pitchAngularAcceleration = drive * pitchLeverArm / pitchInertia;
+unit.pitchVelocity += pitchAngularAcceleration * dt;
+// Apply time-independent damping (exponential decay factor per step)
+const dt = 1 / 60; // fixed step for consistency
+unit.pitchVelocity *= Math.exp(-0.05 * dt); // damping per step
+unit.pitch += unit.pitchVelocity * dt;
+unit.pitch = clamp(unit.pitch, -Math.PI / 2, Math.PI / 2); // allow full flip range
+
+// Yaw: from differential longitudinal forces at the wheels
+// Differential driving creates yaw torque about the vehicle center
+// If left wheel drives harder than right, robot yaws right (clockwise, negative omega)
+// Yaw torque = track_width * (F_right - F_left) / 2 ... hmm, need to get sign right
+// Actually: tau = WHEEL_HALF_TRACK * (rightLongitudinalForce - leftLongitudinalForce)
+// If leftForce > rightForce: tau < 0 竊・clockwise 竊・yaw right 笨・
+// If rightForce > leftForce: tau > 0 竊・counter-clockwise 竊・yaw left 笨・
+const yawTorque = WHEEL_HALF_TRACK * (rightMotorForceClamped - leftMotorForceClamped);
+unit.omega += yawTorque / inertia * dt;
+
+// Roll: lateral tilt from lateral force
+// Lever arm = half track width (left/right displacement)
+const rollInertia = unit.inertia ?? BODY_INERTIA;
+const rollAngularAcceleration = totalLateral * (TRACK_WIDTH / 2) / rollInertia;
+unit.rollVelocity += rollAngularAcceleration * dt;
+unit.rollVelocity *= Math.exp(-0.05 * dt); // time-independent damping
+unit.roll += unit.rollVelocity * dt;
+unit.roll = clamp(unit.roll, -Math.PI / 2, Math.PI / 2); // allow full flip range
+
+// Ground contact and wheel load calculation
+// Calculate each wheel's position in world space
+// **FIX**: Wheels are at left/right (side direction), NOT front/rear (forward direction)
+// Old (buggy): Used forward.x * (ﾂｱTRACK_WIDTH/2) which incorrectly positions wheels front/rear
+// New (fixed): Use side.x * (ﾂｱWHEEL_HALF_TRACK) for left-right wheel spacing
+const leftWheelWorldX = unit.x + side.x * (-WHEEL_HALF_TRACK);
+const leftWheelWorldY = unit.y + side.y * (-WHEEL_HALF_TRACK);
+const rightWheelWorldX = unit.x + side.x * (WHEEL_HALF_TRACK);
+const rightWheelWorldY = unit.y + side.y * (WHEEL_HALF_TRACK);
+
+// How far each wheel is from the ground
+const groundThreshold = WHEEL_RADIUS * 1.2;
+const leftWheelBelowGround = leftWheelWorldY <= groundThreshold;
+const rightWheelBelowGround = rightWheelWorldY <= groundThreshold;
+
+// Grounded state: below threshold AND sufficient load
+const minLoadForGround = 0.05;
+const leftGrounded = leftWheelBelowGround && unit.leftWheel.load >= minLoadForGround;
+const rightGrounded = rightWheelBelowGround && unit.rightWheel.load >= minLoadForGround;
+
+// Update grounded states
+unit.leftGrounded = leftGrounded;
+unit.rightGrounded = rightGrounded;
+
+// Wheel slip indicators already set above (reflect traction saturation, 0 to 1)
+// No additional slip detection needed here
+const lateralForce = clamp(-axleLateral * effectiveMass * LATERAL_STIFFNESS / dt, -totalAvailableGrip, totalAvailableGrip);
+unit.lateralSaturation = totalAvailableGrip > 0 ? Math.abs(lateralForce) / totalAvailableGrip : 1;
+
+// Total drive force
+const drive = groundedLeftForce + groundedRightForce;
+
+// Yaw torque
+const torque = TRACK_WIDTH / 2 * (groundedLeftForce - groundedRightForce) + WHEEL_AXLE_X * lateralForce;
+unit.omega += torque / inertia * dt;
+
+// ----- Blade physics effects -----
+// Check for opponent blade contact with this robot's bottom
+// Use the last known contact point and force
+if (unit.contactForce > 5 && unit.contactPoint) {
+  // Calculate blade engagement factor
+  const towardOther = { x: -unit.x + (unit === this.ai ? this.player.x : -this.ai.x), y: -unit.y + (unit === this.ai ? this.player.y : -this.ai.y) };
+  const engagement = bladeEngagement(unit, unit.contactPoint, towardOther);
+  
+  if (engagement > 0.1) {
+    // Blade is engaged - calculate lift force
+    const bladeLiftForce = unit.contactForce * engagement * 0.1;
+    
+    // Apply lift force creates pitch moment
+    const pitchMomentFromBlade = bladeLiftForce * Math.abs(unit.contactPoint.x);
+    const pitchInertia = unit.inertia ?? BODY_INERTIA;
+    const pitchAngularAccelerationFromBlade = pitchMomentFromBlade / pitchInertia;
+    unit.pitchVelocity += pitchAngularAccelerationFromBlade * dt;
+    unit.pitchVelocity *= 0.95; // damping
+    unit.pitch += unit.pitchVelocity * dt;
+    unit.pitch = clamp(unit.pitch, -Math.PI / 2, Math.PI / 2);
+    
+    // Shift load to rear wheels (blade lifts front)
+    const frontLoadShift = bladeLiftForce * 0.05;
+    const rearLoadShift = bladeLiftForce * 0.05;
+    
+    unit.leftWheel.load = Math.max(0, unit.leftWheel.load - frontLoadShift);
+    unit.rightWheel.load = Math.max(0, unit.rightWheel.load - frontLoadShift);
+    
+    // Reduce drive force when front wheels are unloaded
+    const frontWheelLoadReduction = bladeLiftForce * 0.02;
+    const groundedLeftForce = unit.leftGrounded ? Math.max(0, leftMotorForceClamped - frontWheelLoadReduction) : 0;
+    const groundedRightForce = unit.rightGrounded ? Math.max(0, rightMotorForceClamped - frontWheelLoadReduction) : 0;
+    const drive = groundedLeftForce + groundedRightForce;
+  }
+}
 
     unit.vx *= Math.exp(-ROLLING_DRAG * dt); unit.vy *= Math.exp(-ROLLING_DRAG * dt);
     unit.omega *= Math.exp(-YAW_DRAG * dt);
@@ -619,6 +1198,15 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
     const liftOnA = BLADE_LIFT * this.contactForce * wedgeB * (1 - wedgeA);
     steerLoad(a, 1 + (liftOnB - liftOnA) / (a.mass * GRIP_ACCEL), dt);
     steerLoad(b, 1 + (liftOnA - liftOnB) / (b.mass * GRIP_ACCEL), dt);
+    // Additional: direct pitch and roll from blade contact position.
+    // Blade contact forward of center pitches robot nose-down; aft pitches nose-up.
+    // Blade contact left of center rolls robot left; right rolls right.
+    const pitchFromBlade = (wedgeA - wedgeB) * BLADE_PITCH_FACTOR * normalImpulseMagnitude / Math.max(a.mass, b.mass);
+    const rollFromBlade = (wedgeA - wedgeB) * BLADE_ROLL_FACTOR * normalImpulseMagnitude / Math.max(a.mass, b.mass);
+    a.pitch += pitchFromBlade * dt;
+    a.roll += rollFromBlade * dt;
+    b.pitch -= pitchFromBlade * dt; // opposite robot
+    b.roll -= rollFromBlade * dt;
     this.contact = { touching: true, point, normal, force: this.contactForce, wedgePlayer: wedgeA, wedgeAI: wedgeB };
     return true;
   }
@@ -681,20 +1269,6 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
     // A straight charge with the blade pointed at the AI: curving in only offers a
     // blade corner; waiting to deflect it (counter) or meeting it squarely is better.
     const straightCharge = !s.touching && s.closingSpeed > 60 && prediction.lateralMomentum < 32 && d < 230 && Math.abs(s.opponentBearing) < 0.5;
-    // --- 性能差評価の開始 ---
-    // AIの実際の物理性能を取得
-    const aiMotorParams = interpolateMotorParams(this.aiTorqueSpeed);
-    const aiMaxSpeed = aiMotorParams.maxSpeed;
-    const aiDriveAccel = aiMotorParams.driveAccel;
-    // プレイヤーの実際の物理性能を取得
-    const playerMotorParams = interpolateMotorParams(this.torqueSpeed);
-    const playerMaxSpeed = playerMotorParams.maxSpeed;
-    const playerDriveAccel = playerMotorParams.driveAccel;
-    // 性能差の判定（1.1倍以上の差がある場合を優位とみなす）
-    const torqueSuperior = aiDriveAccel > playerDriveAccel * 1.1;
-    const speedSuperior = aiMaxSpeed > playerMaxSpeed * 1.1;
-    const performanceInferior = !torqueSuperior && !speedSuperior;
-    // --- 性能差評価の終了 ---
     const chargeProbability = this.opening.opponentOpeningProbs?.charge ?? 0;
     const scores = TACTICS.map((def) => {
       const stat = this.aiState.tactics[def.id] || { priority: def.basePriority, params: def.defaultParams, matchups: {} };
@@ -767,9 +1341,6 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
       const matchup = stat.matchups?.[style];
       if (matchup && matchup.uses > 0) score += 0.6 * ((matchup.wins || 0) - (matchup.losses || 0)) / (matchup.uses + 4);
       score -= clamp(this.tacticMemory[def.id] || 0, -0.8, 2.2);
-      const performanceBonus = performanceCorrection(
-        def.id, aiDriveAccel, playerDriveAccel, aiMaxSpeed, playerMaxSpeed);
-      score += performanceBonus;
       if (!isOpening && def.id === this.tacticId) {
         const currentExecutionTime = clamp(this.aiState.tactics[this.tacticId]?.params?.executionTime ?? 0.8, 0.45, 1.6);
         const elapsed = Math.max(0, this.time - this.tacticStartedAt);
@@ -814,7 +1385,7 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
       const executed = usage.selectedSeconds >= minExecutionSeconds && score > 0;
       const opponentPushed = (usage.startOpponentMargin ?? 0) - (usage.endOpponentMargin ?? usage.startOpponentMargin ?? 0);
       const selfLost = (usage.startSelfMargin ?? 0) - (usage.endSelfMargin ?? usage.startSelfMargin ?? 0);
-      // Intermediate objective of each tactic — tracked separately from the match result.
+      // Intermediate objective of each tactic 窶・tracked separately from the match result.
       let objective = null;
       if (tacticId === 'escape') objective = null; // evaluated by recordEscapeOutcome
       else if (tacticId === 'pivot') objective = usage.startedUnderPressure ? Boolean(usage.recovered) : null;
@@ -988,21 +1559,21 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
       } else if (Math.abs(error) > 0.55) { target = { x: player.x, y: player.y }; drive = 0.2; turnScale = 1.45; }
       else { target = s.predicted || { x: player.x, y: player.y }; drive = 0.9; turnScale = 1.1; }
     } else if (this.tacticId === 'sidestep') {
-      // Lost head-on shove: yaw ~65° off the opponent's line toward the centre side and
+      // Lost head-on shove: yaw ~65ﾂｰ off the opponent's line toward the centre side and
       // slide along its blade so its push glances off, then hit its flank behind the blade.
       const inward = norm({ x: -ai.x, y: -ai.y }); const baseHeading = Math.atan2(toPlayer.y, toPlayer.x);
       if (latch.sideSign === undefined) {
         const plus = { x: Math.cos(baseHeading + 1.15), y: Math.sin(baseHeading + 1.15) }; const minus = { x: Math.cos(baseHeading - 1.15), y: Math.sin(baseHeading - 1.15) };
         const inwardSign = dot(plus, inward) >= dot(minus, inward) ? 1 : -1;
         // Pushed on a blade corner: yaw the way the shove already turns the chassis so
-        // the opponent's blade slides off that corner — unless that faces the rim.
+        // the opponent's blade slides off that corner 窶・unless that faces the rim.
         const cornerY = s.contactLocal?.y ?? 0;
         const torqueSign = Math.abs(cornerY) > 6 ? Math.sign(cornerY) : 0;
         latch.sideSign = torqueSign && (torqueSign === inwardSign || s.selfMargin > 70) ? torqueSign : inwardSign;
       }
       const releasePhase = executionTime * (0.5 - (tactic.params.turnBias - 0.62) * 0.25);
       if (phase < Math.min(releasePhase, 0.4)) {
-        // Spin the blade to ~65° off the shove line almost in place: beyond the contact
+        // Spin the blade to ~65ﾂｰ off the shove line almost in place: beyond the contact
         // friction angle the opponent's blade slides off ours and its own drive carries
         // it past, leaving its side next to the AI.
         direct = this.steerHeading(baseHeading + latch.sideSign * 1.15, -0.05 + tactic.params.aggression * 0.08, 2.6 * clamp(1 + (tactic.params.turnBias - 0.62) * 0.5, 0.8, 1.2));
@@ -1029,7 +1600,7 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
     this.squaringUp = false;
     // Finishing phase shared by the attacking tactics: once the blade is on the
     // opponent's side/back (or it is being driven backward head-on), stop circling and
-    // drive through it toward the nearest edge — the shortest way to push it out.
+    // drive through it toward the nearest edge 窶・the shortest way to push it out.
     const attacking = ['direct', 'zigzag', 'flank', 'diagonal', 'doubleZigzag', 'counter', 'sidestep'].includes(this.tacticId);
     const winningFront = s.frontalContest && dot({ x: player.vx, y: player.vy }, toPlayer) > 12;
     // Blade-to-blade: an attacking tactic shoves at full power, squared up.
@@ -1090,7 +1661,7 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
     this.drawEdgeWarning(ctx, this.player); this.drawEdgeWarning(ctx, this.ai);
     this.drawRobot(ctx, this.player, this.sprites?.player); this.drawRobot(ctx, this.ai, this.sprites?.ai); this.drawContact(ctx); ctx.restore();
     if (this.countdown > 0 && !this.ended) { ctx.save(); ctx.fillStyle = 'rgba(7, 12, 19, .38)'; ctx.fillRect(0, 0, w, h); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 62px system-ui, sans-serif'; ctx.fillStyle = '#fff2bf'; ctx.shadowColor = 'rgba(255,176,74,.7)'; ctx.shadowBlur = 22; ctx.fillText(this.countdown > 0.5 ? Math.ceil(this.countdown).toString() : 'GO', centerX, centerY); ctx.restore(); }
-    if (this.paused && !this.ended) { ctx.save(); ctx.fillStyle = 'rgba(7, 12, 19, .62)'; ctx.fillRect(0, 0, w, h); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 26px system-ui, sans-serif'; ctx.fillStyle = '#f4f6ef'; ctx.fillText('一時停止中', centerX, centerY - 10); ctx.font = '500 13px system-ui, sans-serif'; ctx.fillStyle = '#8b9ba7'; ctx.fillText('画面をタップして再開', centerX, centerY + 18); ctx.restore(); }
+    if (this.paused && !this.ended) { ctx.save(); ctx.fillStyle = 'rgba(7, 12, 19, .62)'; ctx.fillRect(0, 0, w, h); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 26px system-ui, sans-serif'; ctx.fillStyle = '#f4f6ef'; ctx.fillText('荳譎ょ●豁｢荳ｭ', centerX, centerY - 10); ctx.font = '500 13px system-ui, sans-serif'; ctx.fillStyle = '#8b9ba7'; ctx.fillText('逕ｻ髱｢繧偵ち繝・・縺励※蜀埼幕', centerX, centerY + 18); ctx.restore(); }
   }
 
   drawArena(ctx) {
@@ -1173,4 +1744,5 @@ const load = clamp(unit.loadFactor ?? 1, 0.25, 1.75);
   }
 }
 
-export { ARENA_RADIUS, ROBOT_HALF_SIZE, ROBOT_RADIUS, FOOTPRINT, GRIP_ACCEL, DRIVE_ACCEL, MAX_SPEED, contactManifold, forwardOf, sideOf, toLocal, performanceCorrection };
+export { ARENA_RADIUS, ROBOT_HALF_SIZE, ROBOT_RADIUS, FOOTPRINT, GRIP_ACCEL, DRIVE_ACCEL, MAX_SPEED, contactManifold, forwardOf, sideOf, toLocal };
+
