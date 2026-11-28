@@ -576,16 +576,21 @@ const EDGE_MARGIN_THRESHOLD = 5; // units; margin below this = at the edge
   }
 
   situationLabel() {
-    const s = this.lastSituation; if (!s) return '讒伜ｭ占ｦ・;
-    if (s.selfMargin < 30) return '蝨滉ｿｵ髫・;
-    if (s.sidePressure > 0.22) return '讓ｪ縺九ｉ謚ｼ縺輔ｌ縺ｦ縺・ｋ';
-    if (s.rearPressure > 0.3) return '蠕後ｍ縺九ｉ謚ｼ縺輔ｌ縺ｦ縺・ｋ';
-    if (s.frontalLoss > 10) return '豁｣髱｢縺ｧ謚ｼ縺苓ｲ縺・;
-    if (s.touching && s.aiOnOpponentFlank) return '逶ｸ謇九・蛛ｴ髱｢繧呈款縺励※縺・ｋ';
-    if (s.touching && s.frontalContest) return '豁｣髱｢縺ｧ謚ｼ縺怜粋縺・;
-    if (s.touching) return '謗･隗ｦ荳ｭ';
-    return s.distance < 140 ? '謗･霑・ : '髢灘粋縺・;
+    const s = this.lastSituation; if (!s) return '様子見';
+    if (s.selfMargin < 30) return '土俵際';
+    if (s.sidePressure > 0.22) return '横から押されている';
+    if (s.rearPressure > 0.3) return '後ろから押されている';
+    if (s.frontalLoss > 10) return '正面で押し負け';
+    if (s.touching && s.aiOnOpponentFlank) return '相手の側面を押している';
+    if (s.touching && s.frontalContest) return '正面で押し合い';
+    if (s.touching) return '接触中';
+    return s.distance < 140 ? '接近' : '間合い';
   }
+    
+    
+    ;
+    
+    }
 
   update(dt) {
     // Determine if robots are at/out of the dohyo boundary using footprint detection.
